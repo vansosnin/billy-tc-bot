@@ -1,3 +1,6 @@
 language: node_js
 node_js:
 - '6'
+before_script:
+- cp config-example.json config.json
+- chmod 755 config.json

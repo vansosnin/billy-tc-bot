@@ -1,0 +1,9 @@
+{
+    "telegram-token": "YOUR_TOKEN",
+    "teamcity-url": "TC_URL",
+    "unit-tests-build-type": "BUILD_ID_FOR_UNIT_TESTS",
+    "auth": {
+        "username": "username",
+        "password": "password"
+    }
+}
