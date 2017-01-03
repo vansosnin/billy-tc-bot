@@ -1,0 +1,4 @@
+--reporter nyan
+--ui bdd
+--colors
+--inline-diffs

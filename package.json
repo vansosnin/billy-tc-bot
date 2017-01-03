@@ -1,0 +1,20 @@
+{
+  "name": "KonturBillingTCBot",
+  "version": "0.0.1",
+  "description": "Telegram bot for Kontur.Billing TC builds monitoring",
+  "main": "index.js",
+  "repository": "https://github.com",
+  "author": "Ivan Sosnin <vansosnin@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+      "test": "mocha ./test/**/*.test.js"
+  },
+  "dependencies": {
+    "axios": "0.15.3",
+    "node-telegram-bot-api": "0.25.0"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "mocha": "3.2.0"
+  }
+}
