@@ -7,20 +7,24 @@ const buildStatuses = {
 
 class BotMechanics {
     constructor() {
-        this._tc = null;
-        this._branch = null;
+        this._tc = {};
+        this._branch = {};
     }
 
-    setBranch(branch) {
-        this._branch = branch;
+    setBranch(chatId, branch) {
+        this._branch[chatId] = branch;
     }
 
-    initTeamCityClient() {
-        this._tc = new TeamCity(this._branch);
+    getBranch(chatId) {
+        return this._branch[chatId];
     }
 
-    checkLastUnitTest() {
-        return this._tc.getLastUnitTest()
+    initTeamCityClient(chatId) {
+        this._tc[chatId] = new TeamCity(this._branch[chatId]);
+    }
+
+    checkLastUnitTest(chatId) {
+        return this._tc[chatId].getLastUnitTest()
             .then(test => {
                 const { status, webUrl } = test;
                 let message = 'Последний запуск тестов: ';
@@ -42,19 +46,19 @@ class BotMechanics {
         }
     }
 
-    getStatusMessage() {
+    getStatusMessage(chatId) {
         let message = '';
 
-        if (this._branch) {
-            message += `Ветка: ${this._branch}`;
+        if (this._branch[chatId]) {
+            message += `✅ Ветка: ${this._branch[chatId]}`;
         } else {
-            message += 'Ветка не задана. Используй /branch, Люк!'
+            message += '❌ Ветка не задана. Используй /branch, Люк!'
         }
 
-        if (this._tc) {
-            message += '\nКлиент TeamCity проинициализирован';
+        if (this._tc[chatId]) {
+            message += '\n✅ Клиент TeamCity проинициализирован';
         } else {
-            message += '\nКлиент TeamCity не проинициализирован. Используй /branch, Люк!';
+            message += '\n❌ Клиент TeamCity не проинициализирован. Используй /branch, Люк!';
         }
 
         return message;

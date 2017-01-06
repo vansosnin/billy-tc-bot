@@ -22,24 +22,34 @@ bot.onText(/\/ping/, msg => {
 });
 
 bot.onText(/\/branch (.+)/, function (msg, match) {
+    const chatId = msg.chat.id;
     const branch = match[1];
-    botMechanics.setBranch(branch);
-    botMechanics.initTeamCityClient();
+    botMechanics.setBranch(chatId, branch);
+    botMechanics.initTeamCityClient(chatId);
 
-    bot.sendMessage(msg.chat.id, `Ветка «${branch}» сохранена 👌`);
+    bot.sendMessage(chatId, `Ветка «${branch}» сохранена 👌`);
 });
 
 bot.onText(/\/tests/, msg => {
-    botMechanics
-        .checkLastUnitTest()
-        .then(message => {
-            bot.sendMessage(msg.chat.id, message, {'parse_mode': 'Markdown'});
-        })
-        .catch(e => {
-            bot.sendMessage(msg.chat.id, defaultErrorMessage + '\n' + e);
-        });
+    const chatId = msg.chat.id;
+
+    try {
+        botMechanics
+            .checkLastUnitTest(chatId)
+            .then(message => {
+                bot.sendMessage(chatId, message, {'parse_mode': 'Markdown'});
+            })
+            .catch(e => {
+                bot.sendMessage(chatId, defaultErrorMessage + '\n' + e);
+            });
+    } catch (e) {
+        bot.sendMessage(chatId, defaultErrorMessage + '\n' + e);
+    }
+});
 });
 
 bot.onText(/\/status/, msg => {
-    bot.sendMessage(msg.chat.id, botMechanics.getStatusMessage());
+    const chatId = msg.chat.id;
+
+    bot.sendMessage(chatId, botMechanics.getStatusMessage(chatId));
 });
