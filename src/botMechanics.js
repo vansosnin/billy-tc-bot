@@ -1,3 +1,4 @@
+const TelegramBot = require('node-telegram-bot-api');
 const TeamCity = require('./teamcity.js');
 const config = require('../config.json');
 
@@ -7,8 +8,8 @@ const buildStatuses = {
 };
 
 class BotMechanics {
-    constructor(bot) {
-        this._bot = bot;
+    constructor() {
+        this._bot = new TelegramBot(config['telegram-token'], { polling: true });
         this._tcMap = {
             default: new TeamCity(config['default-branch'])
         };
@@ -17,7 +18,56 @@ class BotMechanics {
         };
         this._timerMap = {};
         this._lastTestStatusMap = {};
-        this._defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status';
+
+        this.addEventListeners();
+    }
+
+    addEventListeners() {
+        this._bot.onText(/(\/start)|(\/help)/, msg => {
+            const message = '*Для начала*:' +
+                '\n/branch `<BranchName>` - задать ветку' +
+                '\n\n*Потом можно так*:' +
+                '\n/tests - проверить тесты' +
+                '\n/watchon - наблюдать за билдами ветки' +
+                '\n\n*А еще можно вот так*:' +
+                '\n/status - проверить статус' +
+                '\n/ping - проверить доступность' +
+                '\n/watchoff - отключить наблюдение за билдами ветки';
+
+            this._bot.sendMessage(msg.chat.id, message, {'parse_mode': 'Markdown'});
+        });
+
+        this._bot.onText(/\/ping/, msg => {
+            this._bot.sendMessage(msg.chat.id, "Я здесь 👋");
+        });
+
+        this._bot.onText(/\/branch (.+)/, function (msg, match) {
+            const chatId = msg.chat.id;
+            const branch = match[1];
+
+            this.setBranch(chatId, branch);
+            this.initTeamCityClient(chatId);
+
+            this._bot.sendMessage(chatId, `Ветка «${branch}» сохранена 👌`);
+        });
+
+        this._bot.onText(/\/tests/, msg => {
+            this.checkLastUnitTest(msg.chat.id);
+        });
+
+        this._bot.onText(/\/watchon/, msg => {
+            this.addBuildWatcher(msg.chat.id);
+        });
+
+        this._bot.onText(/\/watchoff/, msg => {
+            this.removeBuildWatcher(msg.chat.id);
+        });
+
+        this._bot.onText(/\/status/, msg => {
+            const chatId = msg.chat.id;
+
+            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {'parse_mode': 'Markdown'});
+        });
     }
 
     setBranch(chatId, branch) {
@@ -64,8 +114,6 @@ class BotMechanics {
                 const { status, webUrl } = test;
                 let message = '';
 
-                console.log('old status', this._lastTestStatusMap[chatId]);
-                console.log('new status', status);
                 if (status === this._lastTestStatusMap[chatId]) {
                     return;
                 }
@@ -97,7 +145,7 @@ class BotMechanics {
                 const { status, webUrl } = test;
                 this._lastTestStatusMap[chatId] = status;
 
-                let message = 'Последний запуск тестов: ';
+                let message = 'Результат последнего запуска тестов: ';
                 message += this.getStatusEmoji(status) + ' ';
                 message += `[Подробнее](${webUrl})`;
 
@@ -125,7 +173,7 @@ class BotMechanics {
         if (this._branchMap[chatId]) {
             message += `✅ Ветка: ${this._branchMap[chatId]}`;
         } else {
-            message += `❌ Ветка не задана. Используется ветка по умолчанию: _${config['default-branch']}_. Используй /branch, Люк!`
+            message += `❌ Ветка не задана. Используется ветка по умолчанию: *${config['default-branch']}*. Используй /branch, Люк!`
         }
 
         if (this._tcMap[chatId]) {
@@ -144,7 +192,9 @@ class BotMechanics {
     }
 
     reportError(chatId, error) {
-        this.sendMessage(chatId, this._defaultErrorMessage + '\n' + error);
+        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status';
+
+        this.sendMessage(chatId, defaultErrorMessage + '\n' + error);
     }
 
     sendMessage(chatId, message, options = {}) {
