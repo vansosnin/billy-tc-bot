@@ -17,7 +17,11 @@ class TeamCity {
     getLastUnitTest(running = false) {
         return this.getUnitTestResults(1, running)
             .then(result => {
-                return result.data.build[0];
+                if (result.data.build && result.data.build[0]) {
+                    return result.data.build[0];
+                } else {
+                    return null;
+                }
             });
     }
 
