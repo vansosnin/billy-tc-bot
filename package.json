@@ -3,11 +3,13 @@
   "version": "0.0.1",
   "description": "Telegram bot for Kontur.Billing TC builds monitoring",
   "main": "index.js",
-  "repository": "https://github.com",
+  "repository": "https://github.com/vansosnin/billy-tc-bot",
   "author": "Ivan Sosnin <vansosnin@gmail.com>",
   "license": "MIT",
   "scripts": {
-      "test": "mocha ./test/**/*.test.js"
+      "test": "mocha ./test/**/*.test.js",
+      "preversion": "yarn test",
+      "postversion": "git push && git push --tags"
   },
   "dependencies": {
     "axios": "0.15.3",
