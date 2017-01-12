@@ -41,7 +41,7 @@ class BotMechanics {
             this._bot.sendMessage(msg.chat.id, "Я здесь 👋");
         });
 
-        this._bot.onText(/\/branch (.+)/, function (msg, match) {
+        this._bot.onText(/\/branch (.+)/, (msg, match) => {
             const chatId = msg.chat.id;
             const branch = match[1];
 
@@ -72,10 +72,6 @@ class BotMechanics {
 
     setBranch(chatId, branch) {
         this._branchMap[chatId] = branch;
-    }
-
-    getBranch(chatId) {
-        return this._branchMap[chatId];
     }
 
     initTeamCityClient(chatId) {
