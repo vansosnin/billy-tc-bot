@@ -31,14 +31,9 @@ class BotMechanics {
                 '\n/watchon - наблюдать за билдами ветки' +
                 '\n\n*А еще можно вот так*:' +
                 '\n/status - проверить статус' +
-                '\n/ping - проверить доступность' +
                 '\n/watchoff - отключить наблюдение за билдами ветки';
 
-            this._bot.sendMessage(msg.chat.id, message, {'parse_mode': 'Markdown'});
-        });
-
-        this._bot.onText(/\/ping/, msg => {
-            this._bot.sendMessage(msg.chat.id, "Я здесь 👋");
+            this.sendMessage(msg.chat.id, message, true);
         });
 
         this._bot.onText(/\/branch (.+)/, (msg, match) => {
@@ -48,7 +43,7 @@ class BotMechanics {
             this.setBranch(chatId, branch);
             this.initTeamCityClient(chatId);
 
-            this._bot.sendMessage(chatId, `Ветка «${branch}» сохранена 👌`);
+            this.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
         });
 
         this._bot.onText(/\/tests/, msg => {
@@ -86,8 +81,8 @@ class BotMechanics {
 
         this.sendMessage(
             chatId,
-            `Смотрим за изменениями _${this._branchMap[chatId]}_`,
-            {'parse_mode': 'Markdown'}
+            `Смотрим за изменениями «*${this._branchMap[chatId] || this._branchMap.default}*»`,
+            true
         );
     }
 
@@ -97,8 +92,8 @@ class BotMechanics {
 
         this.sendMessage(
             chatId,
-            `Больше не смотрим за изменениями _${this._branchMap[chatId]}_`,
-            {'parse_mode': 'Markdown'}
+            `Больше не смотрим за изменениями «*${this._branchMap[chatId] || this._branchMap.default}*»`,
+            true
         );
     }
 
@@ -126,10 +121,7 @@ class BotMechanics {
                 message += `[Подробнее](${webUrl})`;
 
                 this._lastTestStatusMap[chatId] = status;
-                this.sendMessage(chatId, message, {'parse_mode': 'Markdown'});
-            })
-            .catch(e => {
-                this.reportError(chatId, e);
+                this.sendMessage(chatId, message, true);
             });
     }
 
@@ -145,7 +137,7 @@ class BotMechanics {
                 message += this.getStatusEmoji(status) + ' ';
                 message += `[Подробнее](${webUrl})`;
 
-                this.sendMessage(chatId, message, {'parse_mode': 'Markdown'});
+                this.sendMessage(chatId, message, true);
             })
             .catch(e => {
                 this.reportError(chatId, e);
@@ -169,7 +161,7 @@ class BotMechanics {
         if (this._branchMap[chatId]) {
             message += `✅ Ветка: ${this._branchMap[chatId]}`;
         } else {
-            message += `❌ Ветка не задана. Используется ветка по умолчанию: *${config['default-branch']}*. Используй /branch, Люк!`
+            message += `❌ Ветка не задана. Используется ветка по умолчанию: «*${this._branchMap.default}*». Используй /branch, Люк!`
         }
 
         if (this._tcMap[chatId]) {
@@ -188,16 +180,17 @@ class BotMechanics {
     }
 
     reportError(chatId, error) {
-        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status';
+        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status. А может быть я просто не смог достучаться до TeamCity.';
 
         this.sendMessage(chatId, defaultErrorMessage + '\n' + error);
     }
 
-    sendMessage(chatId, message, options = {}) {
-        this._bot.sendMessage(chatId, message, options);
+    sendMessage(chatId, message, useMarkdown) {
+        const fullOptions = {'parse_mode': 'Markdown'};
+        this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
 
         if (!this._tcMap[chatId] && !this._branchMap[chatId]) {
-            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {'parse_mode': 'Markdown'});
+            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), fullOptions);
         }
     }
 }
