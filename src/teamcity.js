@@ -2,7 +2,7 @@ const axios = require('axios');
 const config = require('../config.json');
 
 class TeamCity {
-    constructor(branch = 'release') {
+    constructor(branch = 'master') {
         this._branch = encodeURIComponent(branch);
 
         this._axios = axios.create({
@@ -27,7 +27,7 @@ class TeamCity {
 
     getUnitTestResults(count = 1, running = false) {
         const buildTypeLocator = {
-            id: config["unit-tests-build-type"]
+            id: config['unit-tests-build-type']
         };
         const buildLocator = {
             branch: this._branch,
