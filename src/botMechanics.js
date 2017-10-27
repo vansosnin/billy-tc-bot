@@ -1,5 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
-const TeamCity = require('./teamcity.js');
+const TeamCity = require('./teamcity');
+const Db = require('./db');
 const config = require('../config.json');
 
 const buildStatuses = {
@@ -9,31 +10,41 @@ const buildStatuses = {
 
 class BotMechanics {
     constructor() {
+        this._db = new Db();
         this._bot = new TelegramBot(config['telegram-token'], { polling: true });
-        this._tcMap = {
-            default: new TeamCity(config['default-branch'])
-        };
-        this._branchMap = {
-            default: config['default-branch']
-        };
+        this._tc = new TeamCity();
         this._timerMap = {};
-        this._lastTestStatusMap = {};
 
+        this._initWatchers();
         this.addEventListeners();
     }
 
-    addEventListeners() {
-        this._bot.onText(/(\/start)|(\/help)/, msg => {
-            const message = '*Для начала*:' +
-                '\n/branch `<BranchName>` - задать ветку' +
-                '\n\n*Потом можно так*:' +
-                '\n/tests - проверить тесты' +
-                '\n/watchon - наблюдать за билдами ветки' +
-                '\n\n*А еще можно вот так*:' +
-                '\n/status - проверить статус' +
-                '\n/watchoff - отключить наблюдение за билдами ветки';
+    _initWatchers() {
+        const watchers = this._db.getAllWatchers();
 
-            this.sendMessage(msg.chat.id, message, true);
+        if (watchers && watchers.length > 0) {
+            for (let watcher of watchers) {
+                this._initWatcher(watcher.id);
+            }
+        }
+    }
+
+    _initWatcher(chatId) {
+        this._timerMap[chatId] = setInterval(
+            this.testsWatcher.bind(this, chatId),
+            config['check-interval-ms']
+        );
+    }
+
+    addEventListeners() {
+        this._bot.onText(/\/start/, msg => {
+            this._db.createChat(msg.chat.id, msg.from);
+
+            this.sendHelpMessage(msg.chat.id);
+        });
+
+        this._bot.onText(/\/help/, msg => {
+            this.sendHelpMessage(msg.chat.id);
         });
 
         this._bot.onText(/\/branch (.+)/, (msg, match) => {
@@ -41,7 +52,6 @@ class BotMechanics {
             const branch = match[1];
 
             this.setBranch(chatId, branch);
-            this.initTeamCityClient(chatId);
 
             this.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
         });
@@ -61,51 +71,48 @@ class BotMechanics {
         this._bot.onText(/\/status/, msg => {
             const chatId = msg.chat.id;
 
-            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {'parse_mode': 'Markdown'});
+            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), { 'parse_mode': 'Markdown' });
         });
     }
 
     setBranch(chatId, branch) {
-        this._branchMap[chatId] = branch;
-    }
-
-    initTeamCityClient(chatId) {
-        this._tcMap[chatId] = new TeamCity(this._branchMap[chatId]);
+        this._db.setBranch(chatId, branch);
     }
 
     addBuildWatcher(chatId) {
-        this._timerMap[chatId] = setInterval(
-            this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms']
-        );
+        const chat = this._db.setWatching(chatId, true);
+
+        this._initWatcher(chatId);
 
         this.sendMessage(
             chatId,
-            `Смотрим за изменениями «*${this._branchMap[chatId] || this._branchMap.default}*»`,
+            `Смотрим за изменениями «*${chat.branch}*»`,
             true
         );
     }
 
     removeBuildWatcher(chatId) {
+        const chat = this._db.setWatching(chatId, false);
+
         clearInterval(this._timerMap[chatId]);
         delete this._timerMap[chatId];
 
         this.sendMessage(
             chatId,
-            `Больше не смотрим за изменениями «*${this._branchMap[chatId] || this._branchMap.default}*»`,
+            `Больше не смотрим за изменениями «*${chat.branch}*»`,
             true
         );
     }
 
     testsWatcher(chatId) {
-        const tc = this._tcMap[chatId] || this._tcMap.default;
+        const chat = this._db.chatRecordValue(chatId);
 
-        tc.getLastUnitTest()
+        this._tc.getLastUnitTest(chat.branch)
             .then(test => {
                 const { status, webUrl } = test;
                 let message = '';
 
-                if (status === this._lastTestStatusMap[chatId]) {
+                if (status === chat.lastTestsResult) {
                     return;
                 }
 
@@ -120,18 +127,19 @@ class BotMechanics {
                 message += ' ';
                 message += `[Подробнее](${webUrl})`;
 
-                this._lastTestStatusMap[chatId] = status;
+                this._db.setTestsResult(chatId, status);
+
                 this.sendMessage(chatId, message, true);
             });
     }
 
     checkLastUnitTest(chatId) {
-        const tc = this._tcMap[chatId] || this._tcMap.default;
+        const chat = this._db.chatRecordValue(chatId);
 
-        return tc.getLastUnitTest()
+        return this._tc.getLastUnitTest(chat.branch)
             .then(test => {
                 const { status, webUrl } = test;
-                this._lastTestStatusMap[chatId] = status;
+                this._db.setTestsResult(chatId, status);
 
                 let message = 'Результат последнего запуска тестов: ';
                 message += this.getStatusEmoji(status) + ' ';
@@ -156,21 +164,12 @@ class BotMechanics {
     }
 
     getStatusMessage(chatId) {
+        const chat = this._db.chatRecordValue(chatId);
         let message = '';
 
-        if (this._branchMap[chatId]) {
-            message += `✅ Ветка: ${this._branchMap[chatId]}`;
-        } else {
-            message += `❌ Ветка не задана. Используется ветка по умолчанию: «*${this._branchMap.default}*». Используй /branch, Люк!`
-        }
+        message += `✅ Ветка: ${chat.branch}`;
 
-        if (this._tcMap[chatId]) {
-            message += '\n✅ Клиент TeamCity проинициализирован';
-        } else {
-            message += '\n❌ Клиент TeamCity не проинициализирован. Используй /branch, Люк!';
-        }
-
-        if (this._timerMap[chatId]) {
+        if (chat.watch) {
             message += '\n👁 Большой брат следит';
         } else {
             message += '\n🕶 Большой брат не следит';
@@ -180,18 +179,27 @@ class BotMechanics {
     }
 
     reportError(chatId, error) {
-        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status. А может быть я просто не смог достучаться до TeamCity.';
+        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
 
         this.sendMessage(chatId, defaultErrorMessage + '\n' + error);
     }
 
-    sendMessage(chatId, message, useMarkdown) {
-        const fullOptions = {'parse_mode': 'Markdown'};
-        this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
+    sendHelpMessage(chatId) {
+        const message = '*Для начала*:' +
+            '\n/branch `<BranchName>` - задать ветку. По умолчанию: ' + `_${config['default-branch']}_` +
+            '\n\n*Потом можно так*:' +
+            '\n/tests - проверить тесты' +
+            '\n/watchon - наблюдать за билдами ветки' +
+            '\n\n*А еще можно вот так*:' +
+            '\n/status - проверить статус' +
+            '\n/watchoff - отключить наблюдение за билдами ветки';
 
-        if (!this._tcMap[chatId] && !this._branchMap[chatId]) {
-            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), fullOptions);
-        }
+        this.sendMessage(chatId, message, true);
+    }
+
+    sendMessage(chatId, message, useMarkdown) {
+        const fullOptions = { 'parse_mode': 'Markdown' };
+        this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
     }
 }
 
