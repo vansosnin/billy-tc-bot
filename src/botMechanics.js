@@ -73,6 +73,16 @@ class BotMechanics {
 
             this._bot.sendMessage(chatId, this.getStatusMessage(chatId), { 'parse_mode': 'Markdown' });
         });
+
+        this._bot.onText(/\/broadcast (.+)/, (msg, match) => {
+            if (this._db.isAdmin(msg.chat.id)) {
+                const chats = this._db.getChats().value();
+
+                for (let chat of chats) {
+                    this.sendMessage(chat.id, match[1]);
+                }
+            }
+        });
     }
 
     setBranch(chatId, branch) {
