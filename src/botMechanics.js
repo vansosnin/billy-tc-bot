@@ -5,7 +5,7 @@ const config = require('../config.json');
 
 const buildStatuses = {
     success: 'SUCCESS',
-    failure: 'FAILURE',
+    failure: 'FAILURE'
 };
 
 class BotMechanics {
@@ -39,7 +39,7 @@ class BotMechanics {
     initWatcher(chatId) {
         this._timerMap[chatId] = setInterval(
             this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms'],
+            config['check-interval-ms']
         );
     }
 
@@ -47,7 +47,7 @@ class BotMechanics {
         this.sendMessage(
             config['admin-chat-id'],
             '*⚡ Бот (пере)запущен ⚡*',
-            true,
+            true
         );
     }
 
@@ -87,7 +87,7 @@ class BotMechanics {
             const chatId = msg.chat.id;
 
             this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {
-                parse_mode: 'Markdown',
+                parse_mode: 'Markdown'
             });
         });
 
@@ -114,7 +114,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Смотрим за изменениями «*${chat.branch}*»`,
-            true,
+            true
         );
     }
 
@@ -127,7 +127,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Больше не смотрим за изменениями «*${chat.branch}*»`,
-            true,
+            true
         );
     }
 
@@ -239,7 +239,7 @@ class BotMechanics {
         if (!chat) {
             this._bot.sendMessage(
                 chatId,
-                'Тебя почему-то нет в базе, выполни, пожалуйста, /start',
+                'Тебя почему-то нет в базе, выполни, пожалуйста, /start'
             );
         }
     }
