@@ -1,34 +1,30 @@
 const lowdb = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
+const config = require('../config.json');
 
-let instance = null;
 const DB_LOCATION = './db.json';
 
 class Db {
     constructor() {
-        this._schema= {
+        this._schema = {
             chats: 'chats',
+            adminChatId: 'adminChatId',
             chat: {
                 id: 'id',
                 branch: 'branch',
-                watch: 'watch'
+                watch: 'watch',
+                user: 'user',
+                lastTestsResult: 'lastTestsResult'
             }
         };
 
         this._db = lowdb(new FileSync(DB_LOCATION));
         this._db
             .defaults({
-                [this._schema.chats]: []
+                [this._schema.chats]: [],
+                [this._schema.adminChatId]: 115238607
             })
             .write();
-    }
-
-    static instance() {
-        if (!instance) {
-            instance = new Db();
-        }
-
-        return instance;
     }
 
     getChats() {
@@ -51,6 +47,14 @@ class Db {
         return this.getChat(chat.id);
     }
 
+    createChat(chatId, user) {
+        this.chatRecord(chatId)
+            .assign({
+                [this._schema.chat.user]: user,
+                [this._schema.chat.branch]: config['default-branch']
+            });
+    }
+
     setBranch(chatId, branch) {
         const chat = this.chatRecord(chatId);
 
@@ -62,6 +66,20 @@ class Db {
 
         return chat.assign({ [this._schema.chat.watch]: isWatching }).write();
     }
+
+    setTestsResult(chatId, result) {
+        return this.getChat(chatId).assign({ [this._schema.chat.lastTestsResult]: result }).write();
+    }
+
+    getAllWatchers() {
+        return this.getChats()
+            .filter({ [this._schema.chat.watch]: true })
+            .value();
+    }
+
+    isAdmin(chatId) {
+        return this._db.get(this._schema.adminChatId).value() === chatId;
+    }
 }
 
-module.exports = Db.instance();
+module.exports = Db;
