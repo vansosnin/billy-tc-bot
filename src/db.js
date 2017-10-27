@@ -48,11 +48,12 @@ class Db {
     }
 
     createChat(chatId, user) {
-        this.chatRecord(chatId)
+        return this.chatRecord(chatId)
             .assign({
-                [this._schema.chat.user]: user,
                 [this._schema.chat.branch]: config['default-branch']
-            });
+            })
+            .set(this._schema.chat.user, user)
+            .write();
     }
 
     setBranch(chatId, branch) {
