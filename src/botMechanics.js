@@ -15,25 +15,35 @@ class BotMechanics {
         this._tc = new TeamCity();
         this._timerMap = {};
 
-        this._initWatchers();
+        this.init();
         this.addEventListeners();
     }
 
-    _initWatchers() {
+    init() {
+        this.initWatchers();
+        this.informAdmin();
+    }
+
+    initWatchers() {
         const watchers = this._db.getAllWatchers();
 
         if (watchers && watchers.length > 0) {
             for (let watcher of watchers) {
-                this._initWatcher(watcher.id);
+                this.initWatcher(watcher.id);
             }
         }
     }
 
-    _initWatcher(chatId) {
+    initWatcher(chatId) {
         this._timerMap[chatId] = setInterval(
             this.testsWatcher.bind(this, chatId),
             config['check-interval-ms']
         );
+    }
+
+    informAdmin() {
+        const adminChatId = this._db.getAdminId();
+        this.sendMessage(adminChatId, "*⚡ Бот (пере)запущен ⚡*", true);
     }
 
     addEventListeners() {
@@ -92,7 +102,7 @@ class BotMechanics {
     addBuildWatcher(chatId) {
         const chat = this._db.setWatching(chatId, true);
 
-        this._initWatcher(chatId);
+        this.initWatcher(chatId);
 
         this.sendMessage(
             chatId,

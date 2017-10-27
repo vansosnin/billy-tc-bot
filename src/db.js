@@ -78,8 +78,12 @@ class Db {
             .value();
     }
 
+    getAdminId() {
+        return this._db.get(this._schema.adminChatId).value();
+    }
+
     isAdmin(chatId) {
-        return this._db.get(this._schema.adminChatId).value() === chatId;
+        return this.getAdminId() === chatId;
     }
 }
 
