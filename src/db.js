@@ -33,41 +33,41 @@ class Db {
         return this.getChats().find({ id: chatId });
     }
 
-    chatRecordValue(chatId) {
-        const existingChat = this.getChat(chatId).value();
-
-        return existingChat
-            ? existingChat
-            : this.getChats()
-                  .push({ [this._schema.chat.id]: chatId })
-                  .write()[0];
+    getChatValue(chatId) {
+        return this.getChat(chatId).value();
     }
 
-    chatRecord(chatId) {
-        const chat = this.chatRecordValue(chatId);
+    createChatUnobtrusive(chatId, user) {
+        const existingChat = this.getChatValue(chatId);
 
-        return this.getChat(chat.id);
-    }
+        if (existingChat) {
+            return existingChat
+                .assign({
+                    [this._schema.chat.branch]: config['default-branch'],
+                })
+                .set(this._schema.chat.user, user)
+                .write();
+        }
 
-    createChat(chatId, user) {
-        return this.chatRecord(chatId)
-            .assign({
+        return this.getChats()
+            .push({
+                [this._schema.chat.id]: chatId,
                 [this._schema.chat.branch]: config['default-branch'],
+                [this._schema.chat.user]: user,
             })
-            .set(this._schema.chat.user, user)
             .write();
     }
 
     setBranch(chatId, branch) {
-        const chat = this.chatRecord(chatId);
-
-        return chat.assign({ [this._schema.chat.branch]: branch }).write();
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.branch]: branch })
+            .write();
     }
 
     setWatching(chatId, isWatching) {
-        const chat = this.chatRecord(chatId);
-
-        return chat.assign({ [this._schema.chat.watch]: isWatching }).write();
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.watch]: isWatching })
+            .write();
     }
 
     setTestsResult(chatId, result) {

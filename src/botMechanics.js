@@ -53,7 +53,7 @@ class BotMechanics {
 
     addEventListeners() {
         this._bot.onText(/\/start/, msg => {
-            this._db.createChat(msg.chat.id, msg.from);
+            this._db.createChatUnobtrusive(msg.chat.id, msg.from);
 
             this.sendHelpMessage(msg.chat.id);
         });
@@ -132,7 +132,7 @@ class BotMechanics {
     }
 
     testsWatcher(chatId) {
-        const chat = this._db.chatRecordValue(chatId);
+        const chat = this._db.getChatValue(chatId);
 
         this._tc.getLastUnitTest(chat.branch).then(test => {
             const { status, webUrl } = test;
@@ -160,7 +160,7 @@ class BotMechanics {
     }
 
     checkLastUnitTest(chatId) {
-        const chat = this._db.chatRecordValue(chatId);
+        const chat = this._db.getChatValue(chatId);
 
         return this._tc
             .getLastUnitTest(chat.branch)
@@ -191,7 +191,7 @@ class BotMechanics {
     }
 
     getStatusMessage(chatId) {
-        const chat = this._db.chatRecordValue(chatId);
+        const chat = this._db.getChatValue(chatId);
         let message = '';
 
         message += `Ветка: ${chat.branch}`;
@@ -234,6 +234,14 @@ class BotMechanics {
     sendMessage(chatId, message, useMarkdown) {
         const fullOptions = { parse_mode: 'Markdown' };
         this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
+
+        const chat = this._db.getChatValue(chatId);
+        if (!chat) {
+            this._bot.sendMessage(
+                chatId,
+                'Тебя почему-то нет в базе, выполни, пожалуйста, /start',
+            );
+        }
     }
 }
 
