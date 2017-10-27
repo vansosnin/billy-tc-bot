@@ -2,9 +2,7 @@ const axios = require('axios');
 const config = require('../config.json');
 
 class TeamCity {
-    constructor(branch = 'master') {
-        this._branch = encodeURIComponent(branch);
-
+    constructor() {
         this._axios = axios.create({
             baseURL: `${config['teamcity-url']}httpAuth/app/rest`,
             timeout: 20000,
@@ -14,8 +12,8 @@ class TeamCity {
         });
     }
 
-    getLastUnitTest(running = false) {
-        return this.getUnitTestResults(1, running)
+    getLastUnitTest(branch, running = false) {
+        return this.getUnitTestResults(branch, 1, running)
             .then(result => {
                 if (result.data.build && result.data.build[0]) {
                     return result.data.build[0];
@@ -25,12 +23,12 @@ class TeamCity {
             });
     }
 
-    getUnitTestResults(count = 1, running = false) {
+    getUnitTestResults(branch, count = 1, running = false) {
         const buildTypeLocator = {
             id: config['unit-tests-build-type']
         };
         const buildLocator = {
-            branch: this._branch,
+            branch,
             count,
             running
         };
