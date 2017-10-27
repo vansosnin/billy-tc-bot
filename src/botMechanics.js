@@ -5,13 +5,15 @@ const config = require('../config.json');
 
 const buildStatuses = {
     success: 'SUCCESS',
-    failure: 'FAILURE'
+    failure: 'FAILURE',
 };
 
 class BotMechanics {
     constructor() {
         this._db = new Db();
-        this._bot = new TelegramBot(config['telegram-token'], { polling: true });
+        this._bot = new TelegramBot(config['telegram-token'], {
+            polling: true,
+        });
         this._tc = new TeamCity();
         this._timerMap = {};
 
@@ -37,13 +39,16 @@ class BotMechanics {
     initWatcher(chatId) {
         this._timerMap[chatId] = setInterval(
             this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms']
+            config['check-interval-ms'],
         );
     }
 
     informAdmin() {
-        const adminChatId = this._db.getAdminId();
-        this.sendMessage(adminChatId, "*⚡ Бот (пере)запущен ⚡*", true);
+        this.sendMessage(
+            config['admin-chat-id'],
+            '*⚡ Бот (пере)запущен ⚡*',
+            true,
+        );
     }
 
     addEventListeners() {
@@ -81,11 +86,13 @@ class BotMechanics {
         this._bot.onText(/\/status/, msg => {
             const chatId = msg.chat.id;
 
-            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), { 'parse_mode': 'Markdown' });
+            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {
+                parse_mode: 'Markdown',
+            });
         });
 
         this._bot.onText(/\/broadcast (.+)/, (msg, match) => {
-            if (this._db.isAdmin(msg.chat.id)) {
+            if (this.isAdmin(msg.chat.id)) {
                 const chats = this._db.getChats().value();
 
                 for (let chat of chats) {
@@ -107,7 +114,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Смотрим за изменениями «*${chat.branch}*»`,
-            true
+            true,
         );
     }
 
@@ -120,43 +127,43 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Больше не смотрим за изменениями «*${chat.branch}*»`,
-            true
+            true,
         );
     }
 
     testsWatcher(chatId) {
         const chat = this._db.chatRecordValue(chatId);
 
-        this._tc.getLastUnitTest(chat.branch)
-            .then(test => {
-                const { status, webUrl } = test;
-                let message = '';
+        this._tc.getLastUnitTest(chat.branch).then(test => {
+            const { status, webUrl } = test;
+            let message = '';
 
-                if (status === chat.lastTestsResult) {
-                    return;
-                }
+            if (status === chat.lastTestsResult) {
+                return;
+            }
 
-                message += this.getStatusEmoji(status) + ' ';
+            message += this.getStatusEmoji(status) + ' ';
 
-                if (status === buildStatuses.success) {
-                    message += 'Ура! Тесты зеленые!';
-                } else if (status === buildStatuses.failure) {
-                    message += 'Тесты упали, поднимите, будьте любезны';
-                }
+            if (status === buildStatuses.success) {
+                message += 'Ура! Тесты зеленые!';
+            } else if (status === buildStatuses.failure) {
+                message += 'Тесты упали, поднимите, будьте любезны';
+            }
 
-                message += ' ';
-                message += `[Подробнее](${webUrl})`;
+            message += ' ';
+            message += `[Подробнее](${webUrl})`;
 
-                this._db.setTestsResult(chatId, status);
+            this._db.setTestsResult(chatId, status);
 
-                this.sendMessage(chatId, message, true);
-            });
+            this.sendMessage(chatId, message, true);
+        });
     }
 
     checkLastUnitTest(chatId) {
         const chat = this._db.chatRecordValue(chatId);
 
-        return this._tc.getLastUnitTest(chat.branch)
+        return this._tc
+            .getLastUnitTest(chat.branch)
             .then(test => {
                 const { status, webUrl } = test;
                 this._db.setTestsResult(chatId, status);
@@ -187,7 +194,7 @@ class BotMechanics {
         const chat = this._db.chatRecordValue(chatId);
         let message = '';
 
-        message += `✅ Ветка: ${chat.branch}`;
+        message += `Ветка: ${chat.branch}`;
 
         if (chat.watch) {
             message += '\n👁 Большой брат следит';
@@ -199,14 +206,21 @@ class BotMechanics {
     }
 
     reportError(chatId, error) {
-        const defaultErrorMessage = '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
+        const defaultErrorMessage =
+            '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
 
         this.sendMessage(chatId, defaultErrorMessage + '\n' + error);
     }
 
+    isAdmin(chatId) {
+        return chatId === config['admin-chat-id'];
+    }
+
     sendHelpMessage(chatId) {
-        const message = '*Для начала*:' +
-            '\n/branch `<BranchName>` - задать ветку. По умолчанию: ' + `_${config['default-branch']}_` +
+        const message =
+            '*Для начала*:' +
+            '\n/branch `<BranchName>` - задать ветку. По умолчанию: ' +
+            `_${config['default-branch']}_` +
             '\n\n*Потом можно так*:' +
             '\n/tests - проверить тесты' +
             '\n/watchon - наблюдать за билдами ветки' +
@@ -218,7 +232,7 @@ class BotMechanics {
     }
 
     sendMessage(chatId, message, useMarkdown) {
-        const fullOptions = { 'parse_mode': 'Markdown' };
+        const fullOptions = { parse_mode: 'Markdown' };
         this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
     }
 }

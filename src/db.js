@@ -8,21 +8,19 @@ class Db {
     constructor() {
         this._schema = {
             chats: 'chats',
-            adminChatId: 'adminChatId',
             chat: {
                 id: 'id',
                 branch: 'branch',
                 watch: 'watch',
                 user: 'user',
-                lastTestsResult: 'lastTestsResult'
-            }
+                lastTestsResult: 'lastTestsResult',
+            },
         };
 
         this._db = lowdb(new FileSync(DB_LOCATION));
         this._db
             .defaults({
                 [this._schema.chats]: [],
-                [this._schema.adminChatId]: 115238607
             })
             .write();
     }
@@ -38,7 +36,11 @@ class Db {
     chatRecordValue(chatId) {
         const existingChat = this.getChat(chatId).value();
 
-        return existingChat ? existingChat : this.getChats().push({ [this._schema.chat.id]: chatId }).write()[0];
+        return existingChat
+            ? existingChat
+            : this.getChats()
+                  .push({ [this._schema.chat.id]: chatId })
+                  .write()[0];
     }
 
     chatRecord(chatId) {
@@ -50,7 +52,7 @@ class Db {
     createChat(chatId, user) {
         return this.chatRecord(chatId)
             .assign({
-                [this._schema.chat.branch]: config['default-branch']
+                [this._schema.chat.branch]: config['default-branch'],
             })
             .set(this._schema.chat.user, user)
             .write();
@@ -69,21 +71,15 @@ class Db {
     }
 
     setTestsResult(chatId, result) {
-        return this.getChat(chatId).assign({ [this._schema.chat.lastTestsResult]: result }).write();
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.lastTestsResult]: result })
+            .write();
     }
 
     getAllWatchers() {
         return this.getChats()
             .filter({ [this._schema.chat.watch]: true })
             .value();
-    }
-
-    getAdminId() {
-        return this._db.get(this._schema.adminChatId).value();
-    }
-
-    isAdmin(chatId) {
-        return this.getAdminId() === chatId;
     }
 }
 

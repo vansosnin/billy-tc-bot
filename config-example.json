@@ -4,6 +4,7 @@
     "unit-tests-build-type": "BUILD_ID_FOR_UNIT_TESTS",
     "default-branch": "master",
     "check-interval-ms": 300000,
+    "admin-chat-id": 12345,
     "auth": {
         "username": "username",
         "password": "password"
