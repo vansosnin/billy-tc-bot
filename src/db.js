@@ -38,7 +38,7 @@ class Db {
     chatRecordValue(chatId) {
         const existingChat = this.getChat(chatId).value();
 
-        return existingChat ? existingChat : this.getChats().push({ [this._schema.chat.id]: chatId }).write();
+        return existingChat ? existingChat : this.getChats().push({ [this._schema.chat.id]: chatId }).write()[0];
     }
 
     chatRecord(chatId) {
