@@ -12,39 +12,6 @@ class TeamCity {
         });
     }
 
-    // todo: deprecated
-    getLastUnitTest(branch, running = false) {
-        return this.getUnitTestResults(branch, 1, running).then(result => {
-            if (result.data.build && result.data.build[0]) {
-                return result.data.build[0];
-            } else {
-                return null;
-            }
-        });
-    }
-
-    // todo: deprecated
-    getUnitTestResults(branch, count = 1, running = false) {
-        const buildTypeLocator = {
-            id: config['unit-tests-build-type'],
-        };
-        const buildLocator = {
-            branch,
-            count,
-            running,
-        };
-
-        return this._axios
-            .request({
-                url: `buildTypes/${this._stringifyLocator(
-                    buildTypeLocator
-                )}/builds?locator=${this._stringifyLocator(buildLocator)}`,
-            })
-            .catch(e => {
-                console.log(e);
-            });
-    }
-
     getTestsResults(branch, count = 1, running = false) {
         const buildLocator = this._stringifyLocator({
             branch,
