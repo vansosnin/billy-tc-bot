@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "axios": "0.17.0",
+    "lodash": "4.17.4",
     "lowdb": "1.0.0",
     "node-telegram-bot-api": "0.29.0"
   },

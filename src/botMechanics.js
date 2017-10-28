@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const _ = require('lodash');
 const TeamCity = require('./teamcity');
 const Db = require('./db');
 const config = require('../config.json');
@@ -135,27 +136,15 @@ class BotMechanics {
         const chat = this._db.getChatValue(chatId);
 
         this._tc.getTestsResults(chat.branch).then(tests => {
-            const { status, webUrl } = tests;
-            let message = '';
+            const preparedTests = this.prepareTestsToSave(tests);
 
-            if (status === chat.lastTestsResult) {
+            if (_.isEqual(preparedTests, chat.lastTestsResult)) {
                 return;
             }
 
-            message += this.getStatusEmoji(status) + ' ';
+            this._db.setTestsResult(chatId, preparedTests);
 
-            if (status === buildStatuses.success) {
-                message += 'Ура! Тесты зеленые!';
-            } else if (status === buildStatuses.failure) {
-                message += 'Тесты упали, поднимите, будьте любезны';
-            }
-
-            message += ' ';
-            message += `[Подробнее](${webUrl})`;
-
-            this._db.setTestsResult(chatId, status);
-
-            this.sendMessage(chatId, message, true);
+            this.sendMessage(chatId, this.getTestsMessage(tests), true);
         });
     }
 
