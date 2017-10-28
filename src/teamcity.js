@@ -67,23 +67,24 @@ class TeamCity {
                 })
                 .then(result => {
                     if (result.data.build && result.data.build[0]) {
-                        return {
+                        resolve({
                             result: result.data.build[0],
                             title: config['tests-types'][testIndex].title,
-                        };
+                        });
                     } else {
-                        throw new Error('Data was not received');
+                        reject(new Error('Data was not received'));
                     }
                 })
                 .catch(e => {
                     console.log(e);
                 });
         }).then(result => {
-            if (testIndex < config['tests-types'].length) {
+            const nextIndex = testIndex + 1;
+            if (nextIndex < config['tests-types'].length) {
                 return this.testsResultsLoop(
                     buildLocator,
-                    testIndex + 1,
-                    testsResults.push(result)
+                    nextIndex,
+                    testsResults.concat([result])
                 );
             }
 

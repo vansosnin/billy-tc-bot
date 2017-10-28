@@ -134,8 +134,8 @@ class BotMechanics {
     testsWatcher(chatId) {
         const chat = this._db.getChatValue(chatId);
 
-        this._tc.getLastUnitTest(chat.branch).then(test => {
-            const { status, webUrl } = test;
+        this._tc.getTestsResults(chat.branch).then(tests => {
+            const { status, webUrl } = tests;
             let message = '';
 
             if (status === chat.lastTestsResult) {
@@ -163,9 +163,9 @@ class BotMechanics {
         const chat = this._db.getChatValue(chatId);
 
         return this._tc
-            .getLastUnitTest(chat.branch)
-            .then(test => {
-                const { status, webUrl } = test;
+            .getTestsResults(chat.branch)
+            .then(tests => {
+                const { status, webUrl } = tests;
                 this._db.setTestsResult(chatId, status);
 
                 let message = 'Результат последнего запуска тестов: ';
