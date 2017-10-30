@@ -24,13 +24,19 @@ class TeamCity {
             .request({
                 url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`,
             })
-            .then(result => result.data.buildType.map(buildType => ({
-                id: buildType.id,
-                name: buildType.name,
-                status: buildType.builds.build[0].status,
-                webUrl: buildType.builds.build[0].webUrl,
-                statusText: buildType.builds.build[0].statusText
-            })))
+            .then(result => {
+                if (!result.data.buildType) {
+                    return {};
+                }
+
+                return result.data.buildType.map(buildType => ({
+                    id: buildType.id,
+                    name: buildType.name,
+                    status: buildType.builds.build[0].status,
+                    webUrl: buildType.builds.build[0].webUrl,
+                    statusText: buildType.builds.build[0].statusText
+                }));
+            })
             .catch(e => {
                 console.log(e);
             });
