@@ -28,7 +28,8 @@ class TeamCity {
                 id: buildType.id,
                 name: buildType.name,
                 status: buildType.builds.build[0].status,
-                webUrl: buildType.builds.build[0].webUrl
+                webUrl: buildType.builds.build[0].webUrl,
+                statusText: buildType.builds.build[0].statusText
             })))
             .catch(e => {
                 console.log(e);

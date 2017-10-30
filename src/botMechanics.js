@@ -167,8 +167,8 @@ class BotMechanics {
         let message = 'Результаты последнего запуска тестов:';
 
         for (let buildType of buildTypes) {
-            const { name, status, webUrl } = buildType;
-            message += `\n— ${name}: ${this.getStatusEmoji(status)} [Подробнее](${webUrl})`;
+            const { name, status, webUrl, statusText } = buildType;
+            message += `\n*— ${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
         }
 
         return message;
