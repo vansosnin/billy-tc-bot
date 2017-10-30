@@ -153,33 +153,33 @@ class BotMechanics {
 
         return this._tc
             .getTestsResults(chat.branch)
-            .then(tests => {
-                this._db.setTestsResult(chatId, this.prepareTestsToSave(tests));
+            .then(buildTypes => {
+                this._db.setTestsResult(chatId, this.prepareTestsToSave(buildTypes));
 
-                this.sendMessage(chatId, this.getTestsMessage(tests), true);
+                this.sendMessage(chatId, this.getTestsMessage(buildTypes), true);
             })
             .catch(e => {
                 this.reportError(chatId, e);
             });
     }
 
-    getTestsMessage(tests) {
+    getTestsMessage(buildTypes) {
         let message = 'Результаты последнего запуска тестов:';
 
-        for (let test of tests) {
-            const { buildTypeId, status, webUrl } = test.result;
-            message += `\n— ${buildTypeId.replace("_", "-")}: ${this.getStatusEmoji(status)} [Подробнее](${webUrl})`;
+        for (let buildType of buildTypes) {
+            const { name, status, webUrl } = buildType;
+            message += `\n— ${name}: ${this.getStatusEmoji(status)} [Подробнее](${webUrl})`;
         }
 
         return message;
     }
 
-    prepareTestsToSave(tests) {
+    prepareTestsToSave(buildTypes) {
         const preparedTests = {};
 
-        for (let test of tests) {
-            const { buildTypeId, status } = test.result;
-            preparedTests[buildTypeId] = status;
+        for (let buildType of buildTypes) {
+            const { id, status } = buildType;
+            preparedTests[id] = status;
         }
 
         return preparedTests;

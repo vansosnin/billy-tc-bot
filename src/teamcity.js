@@ -17,46 +17,22 @@ class TeamCity {
             branch,
             count,
             running,
+            canceled: false
         });
 
-        return this.testsResultsLoop(buildLocator);
-    }
-
-    testsResultsLoop(buildLocator, testIndex = 0, testsResults = []) {
-        return new Promise((resolve, reject) => {
-            const buildTypeLocator = this._stringifyLocator({
-                id: config['tests-types'][testIndex].id,
+        return this._axios
+            .request({
+                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`,
+            })
+            .then(result => result.data.buildType.map(buildType => ({
+                id: buildType.id,
+                name: buildType.name,
+                status: buildType.builds.build[0].status,
+                webUrl: buildType.builds.build[0].webUrl
+            })))
+            .catch(e => {
+                console.log(e);
             });
-
-            this._axios
-                .request({
-                    url: `buildTypes/${buildTypeLocator}/builds?locator=${buildLocator}`,
-                })
-                .then(result => {
-                    if (result.data.build && result.data.build[0]) {
-                        resolve({
-                            result: result.data.build[0],
-                            title: config['tests-types'][testIndex].title,
-                        });
-                    } else {
-                        reject(new Error('Data was not received'));
-                    }
-                })
-                .catch(e => {
-                    console.log(e);
-                });
-        }).then(result => {
-            const nextIndex = testIndex + 1;
-            if (nextIndex < config['tests-types'].length) {
-                return this.testsResultsLoop(
-                    buildLocator,
-                    nextIndex,
-                    testsResults.concat([result])
-                );
-            }
-
-            return testsResults;
-        });
     }
 
     _stringifyLocator(locator) {

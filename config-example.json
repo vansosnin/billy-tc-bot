@@ -1,7 +1,7 @@
 {
     "telegram-token": "YOUR_TOKEN",
     "teamcity-url": "TC_URL",
-    "tests-types": [{ "id": "BUILD_ID_FOR_UNIT_TESTS", "title": "Unit tests" }],
+    "tc-project-id": "TESTS_PROJECT_ID",
     "default-branch": "master",
     "check-interval-ms": 300000,
     "admin-chat-id": 12345,
