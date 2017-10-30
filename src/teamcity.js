@@ -26,16 +26,24 @@ class TeamCity {
             })
             .then(result => {
                 if (!result.data.buildType) {
-                    return {};
+                    return [];
                 }
 
-                return result.data.buildType.map(buildType => ({
-                    id: buildType.id,
-                    name: buildType.name,
-                    status: buildType.builds.build[0].status,
-                    webUrl: buildType.builds.build[0].webUrl,
-                    statusText: buildType.builds.build[0].statusText
-                }));
+                return result.data.buildType.map(buildType => {
+                    if (!buildType) {
+                        return {};
+                    }
+
+                    const build = buildType.builds.build[0] || {};
+
+                    return {
+                        id: buildType.id,
+                        name: buildType.name,
+                        status: build.status,
+                        webUrl: build.webUrl,
+                        statusText: build.statusText
+                    };
+                });
             })
             .catch(e => {
                 console.log(e);

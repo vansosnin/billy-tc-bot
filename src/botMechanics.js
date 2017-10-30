@@ -168,7 +168,11 @@ class BotMechanics {
 
         for (let buildType of buildTypes) {
             const { name, status, webUrl, statusText } = buildType;
-            message += `\n*— ${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
+            if (!status) {
+                message += `\n*— ${name}:* ❓`;
+            } else {
+                message += `\n*— ${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
+            }
         }
 
         return message;
