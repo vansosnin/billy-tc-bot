@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const _ = require('lodash');
 const TeamCity = require('./teamcity');
 const Db = require('./db');
 const config = require('../config.json');
@@ -134,28 +135,16 @@ class BotMechanics {
     testsWatcher(chatId) {
         const chat = this._db.getChatValue(chatId);
 
-        this._tc.getLastUnitTest(chat.branch).then(test => {
-            const { status, webUrl } = test;
-            let message = '';
+        this._tc.getTestsResults(chat.branch).then(tests => {
+            const preparedTests = this.prepareTestsToSave(tests);
 
-            if (status === chat.lastTestsResult) {
+            if (_.isEqual(preparedTests, chat.lastTestsResult)) {
                 return;
             }
 
-            message += this.getStatusEmoji(status) + ' ';
+            this._db.setTestsResult(chatId, preparedTests);
 
-            if (status === buildStatuses.success) {
-                message += 'Ура! Тесты зеленые!';
-            } else if (status === buildStatuses.failure) {
-                message += 'Тесты упали, поднимите, будьте любезны';
-            }
-
-            message += ' ';
-            message += `[Подробнее](${webUrl})`;
-
-            this._db.setTestsResult(chatId, status);
-
-            this.sendMessage(chatId, message, true);
+            this.sendMessage(chatId, this.getTestsMessage(tests), true);
         });
     }
 
@@ -163,20 +152,37 @@ class BotMechanics {
         const chat = this._db.getChatValue(chatId);
 
         return this._tc
-            .getLastUnitTest(chat.branch)
-            .then(test => {
-                const { status, webUrl } = test;
-                this._db.setTestsResult(chatId, status);
+            .getTestsResults(chat.branch)
+            .then(buildTypes => {
+                this._db.setTestsResult(chatId, this.prepareTestsToSave(buildTypes));
 
-                let message = 'Результат последнего запуска тестов: ';
-                message += this.getStatusEmoji(status) + ' ';
-                message += `[Подробнее](${webUrl})`;
-
-                this.sendMessage(chatId, message, true);
+                this.sendMessage(chatId, this.getTestsMessage(buildTypes), true);
             })
             .catch(e => {
                 this.reportError(chatId, e);
             });
+    }
+
+    getTestsMessage(buildTypes) {
+        let message = 'Результаты последнего запуска тестов:';
+
+        for (let buildType of buildTypes) {
+            const { name, status, webUrl, statusText } = buildType;
+            message += `\n*— ${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
+        }
+
+        return message;
+    }
+
+    prepareTestsToSave(buildTypes) {
+        const preparedTests = {};
+
+        for (let buildType of buildTypes) {
+            const { id, status } = buildType;
+            preparedTests[id] = status;
+        }
+
+        return preparedTests;
     }
 
     getStatusEmoji(status) {
