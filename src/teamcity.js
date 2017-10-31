@@ -29,7 +29,14 @@ class TeamCity {
                     return [];
                 }
 
-                return result.data.buildType.map(buildType => {
+                var buildTypes = result.data.buildType;
+                if (config['tc-build-names']) {
+                    buildTypes = config['tc-build-names'].map(buildName => {
+                        return result.data.buildType.find(type => type.name == buildName);
+                    });
+                }
+
+                return buildTypes.map(buildType => {
                     if (!buildType) {
                         return {};
                     }
