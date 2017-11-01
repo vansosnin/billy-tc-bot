@@ -1,2 +1,3 @@
-[] Checks passed
-[] config-example.json fixed
+- Checks passed
+
+- config-example.json fixed
