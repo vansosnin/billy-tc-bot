@@ -2,6 +2,12 @@
     "telegram-token": "YOUR_TOKEN",
     "teamcity-url": "TC_URL",
     "tc-project-id": "TESTS_PROJECT_ID",
+    "tc-build-names": [
+        "SHOW",
+        "ALL",        
+        "IF",
+        "EMPTY"
+    ],
     "default-branch": "master",
     "check-interval-ms": 300000,
     "admin-chat-id": 12345,
