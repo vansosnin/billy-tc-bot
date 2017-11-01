@@ -1,6 +1,6 @@
 {
   "name": "KonturBillingTCBot",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Telegram bot for Kontur.Billing TC builds monitoring",
   "main": "index.js",
   "repository": "https://github.com/vansosnin/billy-tc-bot",
