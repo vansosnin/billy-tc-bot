@@ -17,14 +17,14 @@ class TeamCity {
             branch,
             count,
             running,
-            canceled: false
+            canceled: false,
         });
 
         return this._axios
             .request({
                 url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`,
             })
-            .then(result => {
+            .then((result) => {
                 let buildTypes = result.data.buildType;
 
                 if (!buildTypes) {
@@ -43,7 +43,7 @@ class TeamCity {
                     buildTypes = buildTypes.filter(buildType => !config['tc-build-types-to-ignore'].includes(buildType.id));
                 }
 
-                return buildTypes.map(buildType => {
+                return buildTypes.map((buildType) => {
                     if (!buildType) {
                         return {};
                     }
@@ -55,18 +55,19 @@ class TeamCity {
                         name: buildType.name,
                         status: build.status,
                         webUrl: build.webUrl,
-                        statusText: build.statusText
+                        statusText: build.statusText,
                     };
                 });
             })
-            .catch(e => {
+            .catch((e) => {
+                // eslint-disable-next-line
                 console.log(e);
             });
     }
 
     _stringifyLocator(locator) {
         return Object.keys(locator)
-            .reduce((result, key) => result + `${key}:${locator[key]},`, '')
+            .reduce((result, key) => `${result}${key}:${locator[key]},`, '')
             .slice(0, -1);
     }
 }

@@ -6,7 +6,7 @@ const config = require('../config.json');
 
 const buildStatuses = {
     success: 'SUCCESS',
-    failure: 'FAILURE'
+    failure: 'FAILURE',
 };
 
 class BotMechanics {
@@ -31,7 +31,7 @@ class BotMechanics {
         const watchers = this._db.getAllWatchers();
 
         if (watchers && watchers.length > 0) {
-            for (let watcher of watchers) {
+            for (const watcher of watchers) {
                 this.initWatcher(watcher.id);
             }
         }
@@ -40,7 +40,7 @@ class BotMechanics {
     initWatcher(chatId) {
         this._timerMap[chatId] = setInterval(
             this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms']
+            config['check-interval-ms'],
         );
     }
 
@@ -48,18 +48,18 @@ class BotMechanics {
         this.sendMessage(
             config['admin-chat-id'],
             '*⚡ Бот (пере)запущен ⚡*',
-            true
+            true,
         );
     }
 
     addEventListeners() {
-        this._bot.onText(/\/start/, msg => {
+        this._bot.onText(/\/start/, (msg) => {
             this._db.createChatUnobtrusive(msg.chat.id, msg.from);
 
             this.sendHelpMessage(msg.chat.id);
         });
 
-        this._bot.onText(/\/help/, msg => {
+        this._bot.onText(/\/help/, (msg) => {
             this.sendHelpMessage(msg.chat.id);
         });
 
@@ -72,23 +72,23 @@ class BotMechanics {
             this.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
         });
 
-        this._bot.onText(/\/tests/, msg => {
+        this._bot.onText(/\/tests/, (msg) => {
             this.checkLastUnitTest(msg.chat.id);
         });
 
-        this._bot.onText(/\/watchon/, msg => {
+        this._bot.onText(/\/watchon/, (msg) => {
             this.addBuildWatcher(msg.chat.id);
         });
 
-        this._bot.onText(/\/watchoff/, msg => {
+        this._bot.onText(/\/watchoff/, (msg) => {
             this.removeBuildWatcher(msg.chat.id);
         });
 
-        this._bot.onText(/\/status/, msg => {
+        this._bot.onText(/\/status/, (msg) => {
             const chatId = msg.chat.id;
 
             this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
             });
         });
 
@@ -96,7 +96,7 @@ class BotMechanics {
             if (this.isAdmin(msg.chat.id)) {
                 const chats = this._db.getChats().value();
 
-                for (let chat of chats) {
+                for (const chat of chats) {
                     this.sendMessage(chat.id, match[1]);
                 }
             }
@@ -115,7 +115,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Смотрим за изменениями «*${chat.branch}*»`,
-            true
+            true,
         );
     }
 
@@ -128,14 +128,14 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Больше не смотрим за изменениями «*${chat.branch}*»`,
-            true
+            true,
         );
     }
 
     testsWatcher(chatId) {
         const chat = this._db.getChatValue(chatId);
 
-        this._tc.getTestsResults(chat.branch).then(tests => {
+        this._tc.getTestsResults(chat.branch).then((tests) => {
             const preparedTests = this.prepareTestsToSave(tests);
 
             if (_.isEqual(preparedTests, chat.lastTestsResult)) {
@@ -153,12 +153,12 @@ class BotMechanics {
 
         return this._tc
             .getTestsResults(chat.branch)
-            .then(buildTypes => {
+            .then((buildTypes) => {
                 this._db.setTestsResult(chatId, this.prepareTestsToSave(buildTypes));
 
                 this.sendMessage(chatId, this.getTestsMessage(buildTypes), true);
             })
-            .catch(e => {
+            .catch((e) => {
                 this.reportError(chatId, e);
             });
     }
@@ -166,12 +166,14 @@ class BotMechanics {
     getTestsMessage(buildTypes) {
         let message = 'Результаты последнего запуска тестов:';
 
-        for (let buildType of buildTypes) {
-            const { name, status, webUrl, statusText } = buildType;
+        for (const buildType of buildTypes) {
+            const {
+                name, status, webUrl, statusText,
+            } = buildType;
             if (!status) {
-                message += `\n*— ${name}:* ❓`;
+                message += `\n*—\u2009${name}:* ❓`;
             } else {
-                message += `\n*— ${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
+                message += `\n*—\u2009${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
             }
         }
 
@@ -181,7 +183,7 @@ class BotMechanics {
     prepareTestsToSave(buildTypes) {
         const preparedTests = {};
 
-        for (let buildType of buildTypes) {
+        for (const buildType of buildTypes) {
             const { id, status } = buildType;
             preparedTests[id] = status;
         }
@@ -219,7 +221,7 @@ class BotMechanics {
         const defaultErrorMessage =
             '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
 
-        this.sendMessage(chatId, defaultErrorMessage + '\n' + error);
+        this.sendMessage(chatId, `${defaultErrorMessage}\n${error}`);
     }
 
     isAdmin(chatId) {
@@ -249,7 +251,7 @@ class BotMechanics {
         if (!chat) {
             this._bot.sendMessage(
                 chatId,
-                'Тебя почему-то нет в базе, выполни, пожалуйста, /start'
+                'Тебя почему-то нет в базе, выполни, пожалуйста, /start',
             );
         }
     }

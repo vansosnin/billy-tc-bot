@@ -1,14 +1,14 @@
-const teamcity = require('../src/teamcity.js');
-const expect = require('chai').expect;
+const TeamCity = require('../src/teamcity.js');
+const { expect } = require('chai');
 
 describe('TeamCity', () => {
     describe('stringifyLocator', () => {
-        const tc = new teamcity();
+        const tc = new TeamCity();
 
         it('should stringify flat locator object', () => {
             const locator = {
                 id: 1,
-                whatever: 'else'
+                whatever: 'else',
             };
             const expected = 'id:1,whatever:else';
 
