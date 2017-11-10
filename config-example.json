@@ -4,7 +4,7 @@
     "tc-project-id": "TESTS_PROJECT_ID",
     "tc-build-names": [
         "SHOW",
-        "ALL",        
+        "ALL",
         "IF",
         "EMPTY"
     ],
