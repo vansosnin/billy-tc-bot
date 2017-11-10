@@ -35,6 +35,10 @@ class TeamCity {
                     buildTypes = buildTypes.filter(buildType => config['tc-build-names'].includes(buildType.name));
                 }
 
+                if (config['tc-build-types']) {
+                    buildTypes = buildTypes.filter(buildType => config['tc-build-types'].includes(buildType.id));
+                }
+
                 return buildTypes.map(buildType => {
                     if (!buildType) {
                         return {};
