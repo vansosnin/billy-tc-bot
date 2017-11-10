@@ -1,0 +1,13 @@
+{
+    "extends": "airbnb",
+    "globals": {
+        "describe": true,
+        "it": true
+    },
+    "rules": {
+        "indent": [1, 4, { "VariableDeclarator": { "var": 2, "let": 2, "const": 2 }, "SwitchCase": 1 }],
+        "no-underscore-dangle": 0,
+        "no-restricted-syntax": 0,
+        "class-methods-use-this": 0
+    }
+}
