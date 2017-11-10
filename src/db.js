@@ -46,6 +46,7 @@ class Db {
                     [this._schema.chat.branch]: config['default-branch']
                 })
                 .set(this._schema.chat.user, user)
+                .set(this._schema.chat.watch, true)
                 .write();
         }
 
@@ -53,7 +54,8 @@ class Db {
             .push({
                 [this._schema.chat.id]: chatId,
                 [this._schema.chat.branch]: config['default-branch'],
-                [this._schema.chat.user]: user
+                [this._schema.chat.user]: user,
+                [this._schema.chat.watch]: true
             })
             .write();
     }
