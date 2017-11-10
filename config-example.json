@@ -14,6 +14,12 @@
         "IF",
         "EMPTY"
     ],
+    "tc-build-types-to-ignore": [
+        "SHOW",
+        "ALL",
+        "IF",
+        "EMPTY"
+    ],
     "default-branch": "master",
     "check-interval-ms": 300000,
     "admin-chat-id": 12345,

@@ -39,6 +39,10 @@ class TeamCity {
                     buildTypes = buildTypes.filter(buildType => config['tc-build-types'].includes(buildType.id));
                 }
 
+                if (config['tc-build-types-to-ignore']) {
+                    buildTypes = buildTypes.filter(buildType => !config['tc-build-types-to-ignore'].includes(buildType.id));
+                }
+
                 return buildTypes.map(buildType => {
                     if (!buildType) {
                         return {};
