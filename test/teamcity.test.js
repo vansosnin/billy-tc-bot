@@ -8,7 +8,7 @@ describe('TeamCity', () => {
         it('should stringify flat locator object', () => {
             const locator = {
                 id: 1,
-                whatever: 'else',
+                whatever: 'else'
             };
             const expected = 'id:1,whatever:else';
 

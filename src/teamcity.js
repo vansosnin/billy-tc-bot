@@ -8,7 +8,7 @@ class TeamCity {
             timeout: 20000,
             json: true,
             method: 'GET',
-            auth: config.auth,
+            auth: config.auth
         });
     }
 
@@ -17,12 +17,12 @@ class TeamCity {
             branch,
             count,
             running,
-            canceled: false,
+            canceled: false
         });
 
         return this._axios
             .request({
-                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`,
+                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`
             })
             .then((result) => {
                 let buildTypes = result.data.buildType;
@@ -55,7 +55,7 @@ class TeamCity {
                         name: buildType.name,
                         status: build.status,
                         webUrl: build.webUrl,
-                        statusText: build.statusText,
+                        statusText: build.statusText
                     };
                 });
             })

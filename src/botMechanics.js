@@ -6,14 +6,14 @@ const config = require('../config.json');
 
 const buildStatuses = {
     success: 'SUCCESS',
-    failure: 'FAILURE',
+    failure: 'FAILURE'
 };
 
 class BotMechanics {
     constructor() {
         this._db = new Db();
         this._bot = new TelegramBot(config['telegram-token'], {
-            polling: true,
+            polling: true
         });
         this._tc = new TeamCity();
         this._timerMap = {};
@@ -40,7 +40,7 @@ class BotMechanics {
     initWatcher(chatId) {
         this._timerMap[chatId] = setInterval(
             this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms'],
+            config['check-interval-ms']
         );
     }
 
@@ -48,7 +48,7 @@ class BotMechanics {
         this.sendMessage(
             config['admin-chat-id'],
             '*⚡ Бот (пере)запущен ⚡*',
-            true,
+            true
         );
     }
 
@@ -88,7 +88,7 @@ class BotMechanics {
             const chatId = msg.chat.id;
 
             this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {
-                parse_mode: 'Markdown',
+                parse_mode: 'Markdown'
             });
         });
 
@@ -168,7 +168,7 @@ class BotMechanics {
 
         for (const buildType of buildTypes) {
             const {
-                name, status, webUrl, statusText,
+                name, status, webUrl, statusText
             } = buildType;
             if (!status) {
                 message += `\n*—\u2009${name}:* ❓`;
