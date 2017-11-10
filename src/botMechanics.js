@@ -115,7 +115,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Смотрим за изменениями «*${chat.branch}*»`,
-            true,
+            true
         );
     }
 
@@ -128,7 +128,7 @@ class BotMechanics {
         this.sendMessage(
             chatId,
             `Больше не смотрим за изменениями «*${chat.branch}*»`,
-            true,
+            true
         );
     }
 
@@ -251,7 +251,7 @@ class BotMechanics {
         if (!chat) {
             this._bot.sendMessage(
                 chatId,
-                'Тебя почему-то нет в базе, выполни, пожалуйста, /start',
+                'Тебя почему-то нет в базе, выполни, пожалуйста, /start'
             );
         }
     }
