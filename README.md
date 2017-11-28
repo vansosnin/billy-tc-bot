@@ -4,6 +4,11 @@
 
 Бот предназначен для мониторинга билдов в TeamCity. Для настройки нужно в корень положить файл config.json по аналогии с [config-example.json](https://github.com/vansosnin/billy-tc-bot/blob/master/config-example.json).
 
+Некоторые неочевидные настройки:
+- `check-interval-ms` - с таким интервалом будет опрашиваться TeamCity
+- `auth` - логин/пароль для TeamCity
+- `admin-chat-id` - см. ниже
+
 ## Возможности администратора
 
 Чтобы этим пользоваться, нужно настроить `admin-chat-id`.
