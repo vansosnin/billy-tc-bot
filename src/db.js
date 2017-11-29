@@ -13,7 +13,8 @@ class Db {
                 branch: 'branch',
                 watch: 'watch',
                 user: 'user',
-                lastTestsResult: 'lastTestsResult'
+                lastTestsResult: 'lastTestsResult',
+                cron: 'cron'
             }
         };
 
@@ -78,9 +79,21 @@ class Db {
             .write();
     }
 
+    setCron(chatId, cron) {
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.cron]: cron })
+            .write();
+    }
+
     getAllWatchers() {
         return this.getChats()
             .filter({ [this._schema.chat.watch]: true })
+            .value();
+    }
+
+    getAllCronTasks() {
+        return this.getChats()
+            .filter(c => !!c[this._schema.chat.cron])
             .value();
     }
 }

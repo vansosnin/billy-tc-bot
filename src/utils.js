@@ -17,6 +17,8 @@ const getStatusEmoji = (status) => {
 };
 
 module.exports = {
+    DEFAULT_CRON_PATTERN: "0 0 9 * * 1-5",
+
     isAdmin: (chatId) => chatId === config['admin-chat-id'],
 
     prepareTestsToSave: (buildTypes) => {
