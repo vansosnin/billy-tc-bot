@@ -1,6 +1,6 @@
 {
     "telegram-token": "YOUR_TOKEN",
-    "teamcity-url": "TC_URL",
+    "teamcity-url": "TC_URL/",
     "tc-project-id": "TESTS_PROJECT_ID",
     "tc-build-names": [
         "SHOW",

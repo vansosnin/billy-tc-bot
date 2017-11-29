@@ -1,4 +1,4 @@
-const BotMechanics = require('./src/botMechanics.js');
+const BotMechanics = require('./src/bot-mechanics.js');
 
 /* eslint-disable */
 const bot = new BotMechanics();

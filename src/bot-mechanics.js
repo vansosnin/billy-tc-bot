@@ -1,13 +1,10 @@
 const TelegramBot = require('node-telegram-bot-api');
 const _ = require('lodash');
+
 const TeamCity = require('./teamcity');
 const Db = require('./db');
+const { isAdmin, prepareTestsToSave, getTestsMessage } = require('./utils');
 const config = require('../config.json');
-
-const buildStatuses = {
-    success: 'SUCCESS',
-    failure: 'FAILURE'
-};
 
 class BotMechanics {
     constructor() {
@@ -93,7 +90,7 @@ class BotMechanics {
         });
 
         this._bot.onText(/\/broadcast (.+)/, (msg, match) => {
-            if (this.isAdmin(msg.chat.id)) {
+            if (isAdmin(msg.chat.id)) {
                 const chats = this._db.getChats().value();
 
                 for (const chat of chats) {
@@ -136,7 +133,7 @@ class BotMechanics {
         const chat = this._db.getChatValue(chatId);
 
         this._tc.getTestsResults(chat.branch).then((tests) => {
-            const preparedTests = this.prepareTestsToSave(tests);
+            const preparedTests = prepareTestsToSave(tests);
 
             if (_.isEqual(preparedTests, chat.lastTestsResult)) {
                 return;
@@ -144,7 +141,7 @@ class BotMechanics {
 
             this._db.setTestsResult(chatId, preparedTests);
 
-            this.sendMessage(chatId, this.getTestsMessage(tests), true);
+            this.sendMessage(chatId, getTestsMessage(tests), true);
         });
     }
 
@@ -154,52 +151,13 @@ class BotMechanics {
         return this._tc
             .getTestsResults(chat.branch)
             .then((buildTypes) => {
-                this._db.setTestsResult(chatId, this.prepareTestsToSave(buildTypes));
+                this._db.setTestsResult(chatId, prepareTestsToSave(buildTypes));
 
-                this.sendMessage(chatId, this.getTestsMessage(buildTypes), true);
+                this.sendMessage(chatId, getTestsMessage(buildTypes), true);
             })
             .catch((e) => {
                 this.reportError(chatId, e);
             });
-    }
-
-    getTestsMessage(buildTypes) {
-        let message = 'Результаты последнего запуска тестов:';
-
-        for (const buildType of buildTypes) {
-            const {
-                name, status, webUrl, statusText
-            } = buildType;
-            if (!status) {
-                message += `\n*—\u2009${name}:* ❓`;
-            } else {
-                message += `\n*—\u2009${name}:* ${this.getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
-            }
-        }
-
-        return message;
-    }
-
-    prepareTestsToSave(buildTypes) {
-        const preparedTests = {};
-
-        for (const buildType of buildTypes) {
-            const { id, status } = buildType;
-            preparedTests[id] = status;
-        }
-
-        return preparedTests;
-    }
-
-    getStatusEmoji(status) {
-        switch (status) {
-            case buildStatuses.success:
-                return '✅';
-            case buildStatuses.failure:
-                return '❌';
-            default:
-                return status;
-        }
     }
 
     getStatusMessage(chatId) {
@@ -222,10 +180,6 @@ class BotMechanics {
             '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
 
         this.sendMessage(chatId, `${defaultErrorMessage}\n${error}`);
-    }
-
-    isAdmin(chatId) {
-        return chatId === config['admin-chat-id'];
     }
 
     sendHelpMessage(chatId) {
