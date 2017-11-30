@@ -1,6 +1,8 @@
 const axios = require('axios');
 const config = require('../config.json');
 
+let instance = null;
+
 class TeamCity {
     constructor() {
         this._axios = axios.create({
@@ -10,6 +12,14 @@ class TeamCity {
             method: 'GET',
             auth: config.auth
         });
+    }
+
+    static instance() {
+        if (!instance) {
+            instance = new TeamCity();
+        }
+
+        return instance;
     }
 
     getTestsResults(branch, count = 1, running = false) {
@@ -72,4 +82,4 @@ class TeamCity {
     }
 }
 
-module.exports = TeamCity;
+module.exports = TeamCity.instance();

@@ -4,6 +4,8 @@ const config = require('../config.json');
 
 const DB_LOCATION = './db.json';
 
+let instance = null;
+
 class Db {
     constructor() {
         this._schema = {
@@ -24,6 +26,14 @@ class Db {
                 [this._schema.chats]: []
             })
             .write();
+    }
+
+    static instance() {
+        if (!instance) {
+            instance = new Db();
+        }
+
+        return instance;
     }
 
     getChats() {
@@ -98,4 +108,4 @@ class Db {
     }
 }
 
-module.exports = Db;
+module.exports = Db.instance();
