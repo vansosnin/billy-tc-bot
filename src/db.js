@@ -49,9 +49,9 @@ class Db {
     }
 
     createChatUnobtrusive(chatId, user) {
-        const existingChat = this.getChatValue(chatId);
+        const existingChat = this.getChat(chatId);
 
-        if (existingChat) {
+        if (existingChat.value()) {
             return existingChat
                 .assign({
                     [this._schema.chat.branch]: config['default-branch']
