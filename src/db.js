@@ -103,7 +103,7 @@ class Db {
 
     getAllCronTasks() {
         return this.getChats()
-            .filter(c => !!c[this._schema.chat.cron])
+            .filter((c) => !!c[this._schema.chat.cron])
             .value();
     }
 }

@@ -67,25 +67,23 @@ class BotMechanics {
             const chatId = msg.chat.id;
             this._cron.set(chatId, match[1])
                 .then((result) => {
-                    this._messenger.sendMessage(chatId, "✅ Планировщик настроен: " + result);
+                    this._messenger.sendMessage(chatId, `✅ Планировщик настроен: ${result}`);
                 })
-                .catch((err) => {
+                .catch(() => {
                     this._messenger.sendMessage(
                         chatId,
                         '❌ Неверный формат Cron' +
-                        `\nПопробуй по умолчанию (без аргументов — по будням в 9 утра) или почитай` +
+                        '\nПопробуй по умолчанию (без аргументов — по будням в 9 утра) или почитай' +
                         ' [какую-нибудь документацию](http://www.nncron.ru/help/RU/working/cron-format.htm).',
                         true
                     );
-
-                    console.error(err);
                 });
         });
 
         this._bot.onText(/\/removereports/, (msg) => {
             const chatId = msg.chat.id;
             this._cron.remove(chatId);
-            this._messenger.sendMessage(chatId, "✅ Планировщик удален");
+            this._messenger.sendMessage(chatId, '✅ Планировщик удален');
         });
 
         this._bot.onText(/\/broadcast (.+)/, (msg, match) => {

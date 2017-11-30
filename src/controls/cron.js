@@ -1,4 +1,4 @@
-const CronJob = require('cron').CronJob;
+const { CronJob } = require('cron');
 
 const Db = require('../db');
 const TeamCity = require('../teamcity');
@@ -52,7 +52,7 @@ class Cron {
 
     _defaultBranchCronTask(chatId) {
         TeamCity.getTestsResults(config['default-branch']).then((tests) => {
-            this._messenger.sendMessage(chatId, `📋 Отчет по тестам в *«${config['default-branch']}»*\n` + getTestsMessage(tests), true);
+            this._messenger.sendMessage(chatId, `📋 Отчет по тестам в *«${config['default-branch']}»*\n${getTestsMessage(tests)}`, true);
         });
     }
 }

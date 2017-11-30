@@ -17,7 +17,7 @@ const getStatusEmoji = (status) => {
 };
 
 module.exports = {
-    DEFAULT_CRON_PATTERN: "0 0 9 * * 1-5",
+    DEFAULT_CRON_PATTERN: '0 0 9 * * 1-5',
 
     isAdmin: (chatId) => chatId === config['admin-chat-id'],
 
@@ -47,5 +47,9 @@ module.exports = {
         }
 
         return message;
-    }
+    },
+
+    stringifyLocator: (locator) => Object.keys(locator)
+        .reduce((result, key) => `${result}${key}:${locator[key]},`, '')
+        .slice(0, -1)
 };

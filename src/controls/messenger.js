@@ -26,13 +26,13 @@ class Messenger {
 
     sendHelpMessage(chatId) {
         const message =
-            '*Для начала*:' +
+            `${'*Для начала*:' +
             '\n/branch `<BranchName>` — задать ветку. По умолчанию: ' +
             `_${config['default-branch']}_` +
             '\n\n*Потом можно так*:' +
             '\n/tests — проверить тесты' +
             '\n/watchon — наблюдать за билдами ветки' +
-            '\n/receivereports `<CronPattern>` — получать отчеты по тестам в ' + config['default-branch'] + ' (пустой паттерн для отчета по будням в 9 утра)' +
+            '\n/receivereports `<CronPattern>` — получать отчеты по тестам в '}${config['default-branch']} (пустой паттерн для отчета по будням в 9 утра)` +
             '\n\n*А еще можно вот так*:' +
             '\n/status — проверить статус' +
             '\n/watchoff — отключить наблюдение за билдами ветки' +
