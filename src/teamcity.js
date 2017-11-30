@@ -1,5 +1,9 @@
 const axios = require('axios');
+
 const config = require('../config.json');
+const { stringifyLocator } = require('./utils');
+
+let instance = null;
 
 class TeamCity {
     constructor() {
@@ -12,8 +16,16 @@ class TeamCity {
         });
     }
 
+    static instance() {
+        if (!instance) {
+            instance = new TeamCity();
+        }
+
+        return instance;
+    }
+
     getTestsResults(branch, count = 1, running = false) {
-        const buildLocator = this._stringifyLocator({
+        const buildLocator = stringifyLocator({
             branch,
             count,
             running,
@@ -32,15 +44,15 @@ class TeamCity {
                 }
 
                 if (config['tc-build-names']) {
-                    buildTypes = buildTypes.filter(buildType => config['tc-build-names'].includes(buildType.name));
+                    buildTypes = buildTypes.filter((buildType) => config['tc-build-names'].includes(buildType.name));
                 }
 
                 if (config['tc-build-types']) {
-                    buildTypes = buildTypes.filter(buildType => config['tc-build-types'].includes(buildType.id));
+                    buildTypes = buildTypes.filter((buildType) => config['tc-build-types'].includes(buildType.id));
                 }
 
                 if (config['tc-build-types-to-ignore']) {
-                    buildTypes = buildTypes.filter(buildType => !config['tc-build-types-to-ignore'].includes(buildType.id));
+                    buildTypes = buildTypes.filter((buildType) => !config['tc-build-types-to-ignore'].includes(buildType.id));
                 }
 
                 return buildTypes.map((buildType) => {
@@ -64,12 +76,6 @@ class TeamCity {
                 console.log(e);
             });
     }
-
-    _stringifyLocator(locator) {
-        return Object.keys(locator)
-            .reduce((result, key) => `${result}${key}:${locator[key]},`, '')
-            .slice(0, -1);
-    }
 }
 
-module.exports = TeamCity;
+module.exports = TeamCity.instance();

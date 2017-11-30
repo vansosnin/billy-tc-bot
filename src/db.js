@@ -4,6 +4,8 @@ const config = require('../config.json');
 
 const DB_LOCATION = './db.json';
 
+let instance = null;
+
 class Db {
     constructor() {
         this._schema = {
@@ -13,7 +15,8 @@ class Db {
                 branch: 'branch',
                 watch: 'watch',
                 user: 'user',
-                lastTestsResult: 'lastTestsResult'
+                lastTestsResult: 'lastTestsResult',
+                cron: 'cron'
             }
         };
 
@@ -23,6 +26,14 @@ class Db {
                 [this._schema.chats]: []
             })
             .write();
+    }
+
+    static instance() {
+        if (!instance) {
+            instance = new Db();
+        }
+
+        return instance;
     }
 
     getChats() {
@@ -78,11 +89,23 @@ class Db {
             .write();
     }
 
+    setCron(chatId, cron) {
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.cron]: cron })
+            .write();
+    }
+
     getAllWatchers() {
         return this.getChats()
             .filter({ [this._schema.chat.watch]: true })
             .value();
     }
+
+    getAllCronTasks() {
+        return this.getChats()
+            .filter((c) => !!c[this._schema.chat.cron])
+            .value();
+    }
 }
 
-module.exports = Db;
+module.exports = Db.instance();

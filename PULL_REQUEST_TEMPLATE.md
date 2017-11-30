@@ -1,3 +1,3 @@
-- Checks passed
+- [ ] Checks passed
 
-- config-example.json fixed
+- [ ] config-example.json fixed

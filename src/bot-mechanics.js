@@ -1,213 +1,100 @@
 const TelegramBot = require('node-telegram-bot-api');
-const _ = require('lodash');
 
-const TeamCity = require('./teamcity');
 const Db = require('./db');
-const { isAdmin, prepareTestsToSave, getTestsMessage } = require('./utils');
+const Cron = require('./controls/cron');
+const Watcher = require('./controls/watcher');
+const Messenger = require('./controls/messenger');
+
+const { isAdmin } = require('./utils');
 const config = require('../config.json');
 
 class BotMechanics {
     constructor() {
-        this._db = new Db();
         this._bot = new TelegramBot(config['telegram-token'], {
             polling: true
         });
-        this._tc = new TeamCity();
-        this._timerMap = {};
+        this._messenger = new Messenger(this._bot);
+        this._cron = new Cron(this._messenger);
+        this._watcher = new Watcher(this._messenger);
 
         this.init();
         this.addEventListeners();
     }
 
     init() {
-        this.initWatchers();
-        this.informAdmin();
-    }
-
-    initWatchers() {
-        const watchers = this._db.getAllWatchers();
-
-        if (watchers && watchers.length > 0) {
-            for (const watcher of watchers) {
-                this.initWatcher(watcher.id);
-            }
-        }
-    }
-
-    initWatcher(chatId) {
-        this._timerMap[chatId] = setInterval(
-            this.testsWatcher.bind(this, chatId),
-            config['check-interval-ms']
-        );
-    }
-
-    informAdmin() {
-        this.sendMessage(
-            config['admin-chat-id'],
-            '*⚡ Бот (пере)запущен ⚡*',
-            true
-        );
+        this._messenger.informAdmin();
     }
 
     addEventListeners() {
         this._bot.onText(/\/start/, (msg) => {
-            this._db.createChatUnobtrusive(msg.chat.id, msg.from);
+            Db.createChatUnobtrusive(msg.chat.id, msg.from);
 
-            this.sendHelpMessage(msg.chat.id);
+            this._messenger.sendHelpMessage(msg.chat.id);
         });
 
         this._bot.onText(/\/help/, (msg) => {
-            this.sendHelpMessage(msg.chat.id);
+            this._messenger.sendHelpMessage(msg.chat.id);
         });
 
         this._bot.onText(/\/branch (.+)/, (msg, match) => {
             const chatId = msg.chat.id;
             const branch = match[1];
 
-            this.setBranch(chatId, branch);
+            Db.setBranch(chatId, branch);
 
-            this.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
+            this._messenger.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
         });
 
         this._bot.onText(/\/tests/, (msg) => {
-            this.checkLastUnitTest(msg.chat.id);
+            this._watcher.checkLastBuild(msg.chat.id);
         });
 
         this._bot.onText(/\/watchon/, (msg) => {
-            this.addBuildWatcher(msg.chat.id);
+            this._watcher.add(msg.chat.id);
         });
 
         this._bot.onText(/\/watchoff/, (msg) => {
-            this.removeBuildWatcher(msg.chat.id);
+            this._watcher.remove(msg.chat.id);
         });
 
         this._bot.onText(/\/status/, (msg) => {
             const chatId = msg.chat.id;
 
-            this._bot.sendMessage(chatId, this.getStatusMessage(chatId), {
-                parse_mode: 'Markdown'
-            });
+            this._messenger.sendStatusMessage(chatId);
+        });
+
+        this._bot.onText(/\/receivereports(.*)/, (msg, match) => {
+            const chatId = msg.chat.id;
+            this._cron.set(chatId, match[1])
+                .then((result) => {
+                    this._messenger.sendMessage(chatId, `✅ Планировщик настроен: ${result}`);
+                })
+                .catch(() => {
+                    this._messenger.sendMessage(
+                        chatId,
+                        '❌ Неверный формат Cron' +
+                        '\nПопробуй по умолчанию (без аргументов — по будням в 9 утра) или почитай' +
+                        ' [какую-нибудь документацию](http://www.nncron.ru/help/RU/working/cron-format.htm).',
+                        true
+                    );
+                });
+        });
+
+        this._bot.onText(/\/removereports/, (msg) => {
+            const chatId = msg.chat.id;
+            this._cron.remove(chatId);
+            this._messenger.sendMessage(chatId, '✅ Планировщик удален');
         });
 
         this._bot.onText(/\/broadcast (.+)/, (msg, match) => {
             if (isAdmin(msg.chat.id)) {
-                const chats = this._db.getChats().value();
+                const chats = Db.getChats().value();
 
                 for (const chat of chats) {
-                    this.sendMessage(chat.id, match[1]);
+                    this._messenger.sendMessage(chat.id, match[1]);
                 }
             }
         });
-    }
-
-    setBranch(chatId, branch) {
-        this._db.setBranch(chatId, branch);
-    }
-
-    addBuildWatcher(chatId) {
-        const chat = this._db.setWatching(chatId, true);
-
-        this.initWatcher(chatId);
-
-        this.sendMessage(
-            chatId,
-            `Смотрим за изменениями «*${chat.branch}*»`,
-            true
-        );
-    }
-
-    removeBuildWatcher(chatId) {
-        const chat = this._db.setWatching(chatId, false);
-
-        clearInterval(this._timerMap[chatId]);
-        delete this._timerMap[chatId];
-
-        this.sendMessage(
-            chatId,
-            `Больше не смотрим за изменениями «*${chat.branch}*»`,
-            true
-        );
-    }
-
-    testsWatcher(chatId) {
-        const chat = this._db.getChatValue(chatId);
-
-        this._tc.getTestsResults(chat.branch).then((tests) => {
-            const preparedTests = prepareTestsToSave(tests);
-
-            if (_.isEqual(preparedTests, chat.lastTestsResult)) {
-                return;
-            }
-
-            this._db.setTestsResult(chatId, preparedTests);
-
-            this.sendMessage(chatId, getTestsMessage(tests), true);
-        });
-    }
-
-    checkLastUnitTest(chatId) {
-        const chat = this._db.getChatValue(chatId);
-
-        return this._tc
-            .getTestsResults(chat.branch)
-            .then((buildTypes) => {
-                this._db.setTestsResult(chatId, prepareTestsToSave(buildTypes));
-
-                this.sendMessage(chatId, getTestsMessage(buildTypes), true);
-            })
-            .catch((e) => {
-                this.reportError(chatId, e);
-            });
-    }
-
-    getStatusMessage(chatId) {
-        const chat = this._db.getChatValue(chatId);
-        let message = '';
-
-        message += `Ветка: ${chat.branch}`;
-
-        if (chat.watch) {
-            message += '\n👁 Большой брат следит';
-        } else {
-            message += '\n🕶 Большой брат не следит';
-        }
-
-        return message;
-    }
-
-    reportError(chatId, error) {
-        const defaultErrorMessage =
-            '⚠ Что-то пошло не так, проверь /status. А может быть, я просто не смог достучаться до TeamCity.';
-
-        this.sendMessage(chatId, `${defaultErrorMessage}\n${error}`);
-    }
-
-    sendHelpMessage(chatId) {
-        const message =
-            '*Для начала*:' +
-            '\n/branch `<BranchName>` - задать ветку. По умолчанию: ' +
-            `_${config['default-branch']}_` +
-            '\n\n*Потом можно так*:' +
-            '\n/tests - проверить тесты' +
-            '\n/watchon - наблюдать за билдами ветки' +
-            '\n\n*А еще можно вот так*:' +
-            '\n/status - проверить статус' +
-            '\n/watchoff - отключить наблюдение за билдами ветки';
-
-        this.sendMessage(chatId, message, true);
-    }
-
-    sendMessage(chatId, message, useMarkdown) {
-        const fullOptions = { parse_mode: 'Markdown' };
-        this._bot.sendMessage(chatId, message, useMarkdown ? fullOptions : {});
-
-        const chat = this._db.getChatValue(chatId);
-        if (!chat) {
-            this._bot.sendMessage(
-                chatId,
-                'Тебя почему-то нет в базе, выполни, пожалуйста, /start'
-            );
-        }
     }
 }
 
