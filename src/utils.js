@@ -33,7 +33,7 @@ module.exports = {
     },
 
     getTestsMessage: (buildTypes) => {
-        let message = 'Результаты последнего запуска тестов:';
+        let message = '';
 
         for (const buildType of buildTypes) {
             const {

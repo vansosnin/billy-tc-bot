@@ -6,6 +6,10 @@ const TeamCity = require('../teamcity');
 const { prepareTestsToSave, getTestsMessage } = require('../utils');
 const config = require('../../config.json');
 
+const _getWatcherTestsMessage = (branch, buildTypes) => `
+    Результаты последнего запуска тестов в *«${branch}»*:\n${getTestsMessage(buildTypes)}
+`;
+
 class Watcher {
     constructor(messenger) {
         this._messenger = messenger;
@@ -57,7 +61,7 @@ class Watcher {
             .then((buildTypes) => {
                 Db.setTestsResult(chatId, prepareTestsToSave(buildTypes));
 
-                this._messenger.sendMessage(chatId, getTestsMessage(buildTypes), true);
+                this._messenger.sendMessage(chatId, _getWatcherTestsMessage(chat.branch, buildTypes), true);
             })
             .catch((e) => {
                 this._messenger.reportTCError(chatId, e);
@@ -83,7 +87,7 @@ class Watcher {
 
             Db.setTestsResult(chatId, preparedTests);
 
-            this._messenger.sendMessage(chatId, getTestsMessage(tests), true);
+            this._messenger.sendMessage(chatId, _getWatcherTestsMessage(chat.branch, tests), true);
         });
     }
 }
