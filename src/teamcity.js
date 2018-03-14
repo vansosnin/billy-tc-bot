@@ -5,6 +5,23 @@ const { stringifyLocator } = require('./utils');
 
 let instance = null;
 
+const _buildTestResultModel = (buildType) => {
+    if (!buildType) {
+        return {};
+    }
+
+    const build = buildType.builds.build[0] || {};
+
+    return {
+        id: buildType.id,
+        name: buildType.name,
+        status: build.status,
+        webUrl: build.webUrl,
+        statusText: build.statusText,
+        buildId: build.id
+    };
+};
+
 class TeamCity {
     constructor() {
         this._axios = axios.create({
@@ -34,7 +51,7 @@ class TeamCity {
 
         return this._axios
             .request({
-                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(status,statusText,webUrl)))`
+                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(id,status,statusText,webUrl)))`
             })
             .then((result) => {
                 let buildTypes = result.data.buildType;
@@ -55,21 +72,7 @@ class TeamCity {
                     buildTypes = buildTypes.filter((buildType) => !config['tc-build-types-to-ignore'].includes(buildType.id));
                 }
 
-                return buildTypes.map((buildType) => {
-                    if (!buildType) {
-                        return {};
-                    }
-
-                    const build = buildType.builds.build[0] || {};
-
-                    return {
-                        id: buildType.id,
-                        name: buildType.name,
-                        status: build.status,
-                        webUrl: build.webUrl,
-                        statusText: build.statusText
-                    };
-                });
+                return buildTypes.map(_buildTestResultModel);
             })
             .catch((e) => {
                 // eslint-disable-next-line
