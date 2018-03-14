@@ -2,17 +2,15 @@ const _ = require('lodash');
 
 const Db = require('../db');
 const TeamCity = require('../teamcity');
+const Blame = require('./blame');
 
 const { prepareTestsToSave, getTestsMessage } = require('../utils');
 const config = require('../../config.json');
 
-const _getWatcherTestsMessage = (branch, buildTypes) => `
-    Результаты последнего запуска тестов в *«${branch}»*:\n${getTestsMessage(buildTypes)}
-`;
-
 class Watcher {
     constructor(messenger) {
         this._messenger = messenger;
+        this._blame = new Blame(messenger);
         this._timerMap = {};
 
         this._init();
@@ -53,19 +51,17 @@ class Watcher {
         );
     }
 
-    checkLastBuild(chatId) {
+    async checkLastBuild(chatId) {
         const chat = Db.getChatValue(chatId);
 
-        return TeamCity
-            .getTestsResults(chat.branch)
-            .then((buildTypes) => {
-                Db.setTestsResult(chatId, prepareTestsToSave(buildTypes));
-
-                this._messenger.sendMessage(chatId, _getWatcherTestsMessage(chat.branch, buildTypes), true);
-            })
-            .catch((e) => {
-                this._messenger.reportTCError(chatId, e);
-            });
+        try {
+            const builds = await TeamCity.getTestsResults(chat.branch);
+            Db.setTestsResult(chatId, prepareTestsToSave(builds));
+            const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
+            this._messenger.sendMessage(chatId, this._getWatcherTestsMessage(chat.branch, enhancedBuilds), true);
+        } catch (e) {
+            this._messenger.reportTCError(chatId, e);
+        }
     }
 
     _initWatcher(chatId) {
@@ -75,20 +71,24 @@ class Watcher {
         );
     }
 
-    _testsWatcher(chatId) {
+    async _testsWatcher(chatId) {
         const chat = Db.getChatValue(chatId);
 
-        TeamCity.getTestsResults(chat.branch).then((tests) => {
-            const preparedTests = prepareTestsToSave(tests);
+        const builds = await TeamCity.getTestsResults(chat.branch);
+        const preparedTests = prepareTestsToSave(builds);
 
-            if (_.isEqual(preparedTests, chat.lastTestsResult)) {
-                return;
-            }
+        if (_.isEqual(preparedTests, chat.lastTestsResult)) {
+            return;
+        }
 
-            Db.setTestsResult(chatId, preparedTests);
+        Db.setTestsResult(chatId, preparedTests);
 
-            this._messenger.sendMessage(chatId, _getWatcherTestsMessage(chat.branch, tests), true);
-        });
+        const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
+        this._messenger.sendMessage(chatId, this._getWatcherTestsMessage(chat.branch, enhancedBuilds), true);
+    }
+
+    _getWatcherTestsMessage (branch, builds) {
+        return `Результаты последнего запуска тестов в *«${branch}»*:\n${getTestsMessage(builds)}`;
     }
 }
 

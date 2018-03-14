@@ -5,23 +5,6 @@ const { stringifyLocator } = require('./utils');
 
 let instance = null;
 
-const _buildTestResultModel = (buildType) => {
-    if (!buildType) {
-        return {};
-    }
-
-    const build = buildType.builds.build[0] || {};
-
-    return {
-        id: buildType.id,
-        name: buildType.name,
-        status: build.status,
-        webUrl: build.webUrl,
-        statusText: build.statusText,
-        buildId: build.id
-    };
-};
-
 class TeamCity {
     constructor() {
         this._axios = axios.create({
@@ -39,6 +22,14 @@ class TeamCity {
         }
 
         return instance;
+    }
+
+    getLastCommits(buildId) {
+        return this._axios
+            .request({
+                url: `changes?locator=build:(id:${buildId})&fields=change`
+            })
+            .then(({ data }) => data.change);
     }
 
     getTestsResults(branch, count = 1, running = false) {
@@ -72,12 +63,29 @@ class TeamCity {
                     buildTypes = buildTypes.filter((buildType) => !config['tc-build-types-to-ignore'].includes(buildType.id));
                 }
 
-                return buildTypes.map(_buildTestResultModel);
+                return buildTypes.map(this._buildTestResultModel);
             })
             .catch((e) => {
                 // eslint-disable-next-line
                 console.log(e);
             });
+    }
+
+    _buildTestResultModel (buildType) {
+        if (!buildType) {
+            return {};
+        }
+
+        const build = buildType.builds.build[0] || {};
+
+        return {
+            id: buildType.id,
+            name: buildType.name,
+            status: build.status,
+            webUrl: build.webUrl,
+            statusText: build.statusText,
+            buildId: build.id
+        };
     }
 }
 

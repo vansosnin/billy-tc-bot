@@ -4,6 +4,7 @@ const Db = require('./db');
 const Cron = require('./controls/cron');
 const Watcher = require('./controls/watcher');
 const Messenger = require('./controls/messenger');
+const Blame = require('./controls/Blame');
 
 const { isAdmin } = require('./utils');
 const config = require('../config.json');
@@ -16,6 +17,7 @@ class BotMechanics {
         this._messenger = new Messenger(this._bot);
         this._cron = new Cron(this._messenger);
         this._watcher = new Watcher(this._messenger);
+        this._blame = new Blame(this._messenger);
 
         this.init();
         this.addEventListeners();
@@ -84,6 +86,14 @@ class BotMechanics {
             const chatId = msg.chat.id;
             this._cron.remove(chatId);
             this._messenger.sendMessage(chatId, '✅ Планировщик удален');
+        });
+
+        this._bot.onText(/\/lastchanges (\d+)/, (msg, match) => {
+            const chatId = msg.chat.id;
+            const count = match[1];
+
+            this._blame.updateCount(chatId, count);
+            this._messenger.sendMessage(chatId, `✅ Количество последних изменений в информации о тестах: ${count}`);
         });
 
         this._bot.onText(/\/broadcast (.+)/, (msg, match) => {

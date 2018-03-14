@@ -20,6 +20,7 @@
         "IF",
         "EMPTY"
     ],
+    "git-commit-url-base": "https://github.com/vansosnin/billy-tc-bot/commit/",
     "default-branch": "master",
     "check-interval-ms": 300000,
     "admin-chat-id": 12345,

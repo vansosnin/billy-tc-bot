@@ -16,7 +16,8 @@ class Db {
                 watch: 'watch',
                 user: 'user',
                 lastTestsResult: 'lastTestsResult',
-                cron: 'cron'
+                cron: 'cron',
+                lastChangesCount: 'lastChangesCount'
             }
         };
 
@@ -66,7 +67,8 @@ class Db {
                 [this._schema.chat.id]: chatId,
                 [this._schema.chat.branch]: config['default-branch'],
                 [this._schema.chat.user]: user,
-                [this._schema.chat.watch]: true
+                [this._schema.chat.watch]: true,
+                [this._schema.chat.lastChangesCount]: 0
             })
             .write();
     }
@@ -105,6 +107,12 @@ class Db {
         return this.getChats()
             .filter((c) => !!c[this._schema.chat.cron])
             .value();
+    }
+
+    setLastChangesCount(chatId, count) {
+        return this.getChat(chatId)
+            .assign({ [this._schema.chat.lastChangesCount]: count })
+            .write();
     }
 }
 

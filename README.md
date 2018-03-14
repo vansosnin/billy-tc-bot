@@ -8,6 +8,7 @@ Some subtle settings:
 - `check-interval-ms` - interval to request TeamCity API
 - `auth` - username/password for TeamCity
 - `admin-chat-id` - see below
+- `git-commit-url-base` - base url to generate commit link (with trailing slash)
 
 ## Administrator's capabilities
 
@@ -24,6 +25,7 @@ help - Get info about commands
 branch - Setup active branch
 status - Check bot status
 tests - Check builds
+lastchanges - Get last N changes on builds in branch (authors and commits)
 watchon - Watch on branch's builds (reports if something changes)
 watchoff - Stop watching on branch's builds
 receivereports - Setup timetable on receiving reports about builds in default branch (no arguments — monday to friday at 9 AM)
@@ -36,8 +38,12 @@ help - Информация по командам
 branch - Задать ветку
 status - Проверить статус
 tests - Проверить билды
+lastchanges - Получать информацию об N последних изменений в ветке (авторы и коммиты)
 watchon - Наблюдать за билдами ветки (уведомляет, если что-то изменилось)
 watchoff - Перестать наблюдать за билдами ветки
 receivereports - Задать расписание отчетов билдов по дефолтной ветке (без аргументов — по будням в 9 утра)
 removereports - Отключить получение регулярных отчетов
 ```
+
+## Requirements
+- NodeJS: 8+

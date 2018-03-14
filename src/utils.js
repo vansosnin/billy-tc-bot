@@ -16,6 +16,20 @@ const getStatusEmoji = (status) => {
     }
 };
 
+const buildCommitInfo = (commitId) => {
+    if (config['git-commit-url-base']) {
+        return `[этом коммите](${config['git-commit-url-base']}${commitId})`;
+    }
+
+    return `коммите ${commitId}`;
+};
+
+const getChangesMessage = (changes = []) => changes.map((change) => {
+    const { username, version } = change;
+
+    return `\n🔧 ${username} в ${buildCommitInfo(version)}`;
+});
+
 module.exports = {
     DEFAULT_CRON_PATTERN: '0 0 9 * * 1-5',
 
@@ -36,13 +50,15 @@ module.exports = {
         let message = '';
 
         for (const buildType of buildTypes) {
-            const {
-                name, status, webUrl, statusText
-            } = buildType;
+            const { name, status, webUrl, statusText, changes } = buildType;
+
             if (!status) {
                 message += `\n*—\u2009${name}:* ❓`;
             } else {
-                message += `\n*—\u2009${name}:* ${getStatusEmoji(status)} \n_${statusText}_\n[Подробнее](${webUrl})`;
+                message += `\n\n*—\u2009${name}:* ${getStatusEmoji(status)}`;
+                message += `\n_${statusText}_`;
+                message += `${getChangesMessage(changes)}`;
+                message += `\n[Подробнее](${webUrl})`;
             }
         }
 
