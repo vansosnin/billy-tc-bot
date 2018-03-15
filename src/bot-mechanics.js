@@ -28,17 +28,17 @@ class BotMechanics {
     }
 
     addEventListeners() {
-        this._bot.onText(/\/start/, (msg) => {
+        this._bot.onText(/^\/start/, (msg) => {
             Db.createChatUnobtrusive(msg.chat.id, msg.from);
 
             this._messenger.sendHelpMessage(msg.chat.id);
         });
 
-        this._bot.onText(/\/help/, (msg) => {
+        this._bot.onText(/^\/help/, (msg) => {
             this._messenger.sendHelpMessage(msg.chat.id);
         });
 
-        this._bot.onText(/\/branch (.+)/, (msg, match) => {
+        this._bot.onText(/^\/branch (.+)/, (msg, match) => {
             const chatId = msg.chat.id;
             const branch = match[1];
 
@@ -47,25 +47,25 @@ class BotMechanics {
             this._messenger.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
         });
 
-        this._bot.onText(/\/tests/, (msg) => {
+        this._bot.onText(/^\/tests/, (msg) => {
             this._watcher.checkLastBuild(msg.chat.id);
         });
 
-        this._bot.onText(/\/watchon/, (msg) => {
+        this._bot.onText(/^\/watchon/, (msg) => {
             this._watcher.add(msg.chat.id);
         });
 
-        this._bot.onText(/\/watchoff/, (msg) => {
+        this._bot.onText(/^\/watchoff/, (msg) => {
             this._watcher.remove(msg.chat.id);
         });
 
-        this._bot.onText(/\/status/, (msg) => {
+        this._bot.onText(/^\/status/, (msg) => {
             const chatId = msg.chat.id;
 
             this._messenger.sendStatusMessage(chatId);
         });
 
-        this._bot.onText(/\/receivereports(.*)/, (msg, match) => {
+        this._bot.onText(/^\/receivereports(.*)/, (msg, match) => {
             const chatId = msg.chat.id;
             this._cron.set(chatId, match[1])
                 .then((result) => {
@@ -82,13 +82,13 @@ class BotMechanics {
                 });
         });
 
-        this._bot.onText(/\/removereports/, (msg) => {
+        this._bot.onText(/^\/removereports/, (msg) => {
             const chatId = msg.chat.id;
             this._cron.remove(chatId);
             this._messenger.sendMessage(chatId, '✅ Планировщик удален');
         });
 
-        this._bot.onText(/\/lastchanges (\d+)/, (msg, match) => {
+        this._bot.onText(/^\/lastchanges (\d+)/, (msg, match) => {
             const chatId = msg.chat.id;
             const count = match[1];
 
@@ -96,7 +96,7 @@ class BotMechanics {
             this._messenger.sendMessage(chatId, `✅ Количество последних изменений в информации о тестах: ${count}`);
         });
 
-        this._bot.onText(/\/broadcast (.+)/, (msg, match) => {
+        this._bot.onText(/^\/broadcast (.+)/, (msg, match) => {
             if (isAdmin(msg.chat.id)) {
                 const chats = Db.getChats().value();
 
