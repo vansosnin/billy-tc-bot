@@ -96,7 +96,7 @@ class Watcher {
     }
 
     _getWatcherTestsMessage(branch, builds) {
-        return `Результаты последнего запуска тестов в *«${branch}»*:\n${getTestsMessage(builds)}`;
+        return `Результаты последнего запуска тестов в *«${branch}»*: ${getTestsMessage(builds)}`;
     }
 }
 
