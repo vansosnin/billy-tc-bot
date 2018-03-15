@@ -50,7 +50,9 @@ module.exports = {
         let message = '';
 
         for (const buildType of buildTypes) {
-            const { name, status, webUrl, statusText, changes } = buildType;
+            const {
+                name, status, webUrl, statusText, changes
+            } = buildType;
 
             if (!status) {
                 message += `\n*—\u2009${name}:* ❓`;

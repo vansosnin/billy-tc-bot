@@ -1,6 +1,5 @@
 const Db = require('../db');
 const TeamCity = require('../teamcity');
-const config = require('../../config.json');
 
 class Blame {
     constructor(messenger) {
@@ -21,6 +20,7 @@ class Blame {
         const enhancedBuilds = [];
 
         for (const build of builds) {
+            // eslint-disable-next-line no-await-in-loop
             const changes = await TeamCity.getLastCommits(build.buildId);
 
             enhancedBuilds.push({

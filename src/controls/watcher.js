@@ -58,7 +58,11 @@ class Watcher {
             const builds = await TeamCity.getTestsResults(chat.branch);
             Db.setTestsResult(chatId, prepareTestsToSave(builds));
             const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
-            this._messenger.sendMessage(chatId, this._getWatcherTestsMessage(chat.branch, enhancedBuilds), true);
+            this._messenger.sendMessage(
+                chatId,
+                this._getWatcherTestsMessage(chat.branch, enhancedBuilds),
+                true
+            );
         } catch (e) {
             this._messenger.reportTCError(chatId, e);
         }
@@ -84,10 +88,14 @@ class Watcher {
         Db.setTestsResult(chatId, preparedTests);
 
         const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
-        this._messenger.sendMessage(chatId, this._getWatcherTestsMessage(chat.branch, enhancedBuilds), true);
+        this._messenger.sendMessage(
+            chatId,
+            this._getWatcherTestsMessage(chat.branch, enhancedBuilds),
+            true
+        );
     }
 
-    _getWatcherTestsMessage (branch, builds) {
+    _getWatcherTestsMessage(branch, builds) {
         return `Результаты последнего запуска тестов в *«${branch}»*:\n${getTestsMessage(builds)}`;
     }
 }

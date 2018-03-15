@@ -71,7 +71,7 @@ class TeamCity {
             });
     }
 
-    _buildTestResultModel (buildType) {
+    _buildTestResultModel(buildType) {
         if (!buildType) {
             return {};
         }
