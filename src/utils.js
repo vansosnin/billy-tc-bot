@@ -55,7 +55,7 @@ module.exports = {
             } = buildType;
 
             if (!status) {
-                message += `\n*—\u2009${name}:* ❓`;
+                message += `\n\n*—\u2009${name}:* ❓`;
             } else {
                 message += `\n\n*—\u2009${name}:* ${getStatusEmoji(status)}`;
                 message += `\n_${statusText}_`;
