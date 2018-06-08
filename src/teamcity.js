@@ -1,5 +1,6 @@
 const axios = require('axios');
 
+const logger = require('./logger');
 const config = require('../config.json');
 const { stringifyLocator } = require('./utils');
 
@@ -12,7 +13,7 @@ class TeamCity {
             timeout: 20000,
             json: true,
             method: 'GET',
-            auth: config.auth
+            auth: config.auth,
         });
     }
 
@@ -27,7 +28,7 @@ class TeamCity {
     getLastCommits(buildId) {
         return this._axios
             .request({
-                url: `changes?locator=build:(id:${buildId})&fields=change`
+                url: `changes?locator=build:(id:${buildId})&fields=change`,
             })
             .then(({ data }) => data.change);
     }
@@ -37,12 +38,14 @@ class TeamCity {
             branch,
             count,
             running,
-            canceled: false
+            canceled: false,
         });
 
         return this._axios
             .request({
-                url: `buildTypes?locator=affectedProject:(id:${config['tc-project-id']})&fields=buildType(id,name,builds($locator(${buildLocator}),build(id,status,statusText,webUrl)))`
+                url: `buildTypes?locator=affectedProject:(id:${
+                    config['tc-project-id']
+                })&fields=buildType(id,name,builds($locator(${buildLocator}),build(id,status,statusText,webUrl)))`,
             })
             .then((result) => {
                 let buildTypes = result.data.buildType;
@@ -52,22 +55,30 @@ class TeamCity {
                 }
 
                 if (config['tc-build-names']) {
-                    buildTypes = buildTypes.filter((buildType) => config['tc-build-names'].includes(buildType.name));
+                    buildTypes = buildTypes.filter((buildType) =>
+                        config['tc-build-names'].includes(buildType.name)
+                    );
                 }
 
                 if (config['tc-build-types']) {
-                    buildTypes = buildTypes.filter((buildType) => config['tc-build-types'].includes(buildType.id));
+                    buildTypes = buildTypes.filter((buildType) =>
+                        config['tc-build-types'].includes(buildType.id)
+                    );
                 }
 
                 if (config['tc-build-types-to-ignore']) {
-                    buildTypes = buildTypes.filter((buildType) => !config['tc-build-types-to-ignore'].includes(buildType.id));
+                    buildTypes = buildTypes.filter(
+                        (buildType) =>
+                            !config['tc-build-types-to-ignore'].includes(
+                                buildType.id
+                            )
+                    );
                 }
 
                 return buildTypes.map(this._buildTestResultModel);
             })
             .catch((e) => {
-                // eslint-disable-next-line
-                console.log(e);
+                logger.error({ chatId: 'teamcity', message: e });
             });
     }
 
@@ -84,7 +95,7 @@ class TeamCity {
             status: build.status,
             webUrl: build.webUrl,
             statusText: build.statusText,
-            buildId: build.id
+            buildId: build.id,
         };
     }
 }

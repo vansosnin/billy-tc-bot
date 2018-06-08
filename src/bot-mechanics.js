@@ -5,6 +5,7 @@ const Cron = require('./controls/cron');
 const Watcher = require('./controls/watcher');
 const Messenger = require('./controls/messenger');
 const Blame = require('./controls/blame');
+const logger = require('./logger');
 
 const { isAdmin } = require('./utils');
 const config = require('../config.json');
@@ -12,7 +13,7 @@ const config = require('../config.json');
 class BotMechanics {
     constructor() {
         this._bot = new TelegramBot(config['telegram-token'], {
-            polling: true
+            polling: true,
         });
         this._messenger = new Messenger(this._bot);
         this._cron = new Cron(this._messenger);
@@ -44,7 +45,11 @@ class BotMechanics {
 
             Db.setBranch(chatId, branch);
 
-            this._messenger.sendMessage(chatId, `Ветка «*${branch}*» сохранена 👌`, true);
+            this._messenger.sendMessage(
+                chatId,
+                `Ветка «*${branch}*» сохранена 👌`,
+                true
+            );
         });
 
         this._bot.onText(/^\/tests/, (msg) => {
@@ -67,16 +72,21 @@ class BotMechanics {
 
         this._bot.onText(/^\/receivereports(.*)/, (msg, match) => {
             const chatId = msg.chat.id;
-            this._cron.set(chatId, match[1])
+            this._cron
+                .set(chatId, match[1])
                 .then((result) => {
-                    this._messenger.sendMessage(chatId, `✅ Планировщик настроен: ${result}`);
+                    this._messenger.sendMessage(
+                        chatId,
+                        `✅ Планировщик настроен: ${result}`
+                    );
                 })
-                .catch(() => {
+                .catch((e) => {
+                    logger.error({ message: e, chatId });
                     this._messenger.sendMessage(
                         chatId,
                         '❌ Неверный формат Cron' +
-                        '\nПопробуй по умолчанию (без аргументов — по будням в 9 утра) или почитай' +
-                        ' [какую-нибудь документацию](http://www.nncron.ru/help/RU/working/cron-format.htm).',
+                            '\nПопробуй по умолчанию (без аргументов — по будням в 9 утра) или почитай' +
+                            ' [какую-нибудь документацию](http://www.nncron.ru/help/RU/working/cron-format.htm).',
                         true
                     );
                 });
@@ -93,7 +103,10 @@ class BotMechanics {
             const count = match[1];
 
             this._blame.updateCount(chatId, count);
-            this._messenger.sendMessage(chatId, `✅ Количество последних изменений в информации о тестах: ${count}`);
+            this._messenger.sendMessage(
+                chatId,
+                `✅ Количество последних изменений в информации о тестах: ${count}`
+            );
         });
 
         this._bot.onText(/^\/broadcast (.+)/, (msg, match) => {
