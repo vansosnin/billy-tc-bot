@@ -3,6 +3,7 @@ const _ = require('lodash');
 const Db = require('../db');
 const TeamCity = require('../teamcity');
 const Blame = require('./blame');
+const { logger } = require('../logger');
 
 const { prepareTestsToSave, getTestsMessage } = require('../utils');
 const config = require('../../config.json');
@@ -57,7 +58,10 @@ class Watcher {
         try {
             const builds = await TeamCity.getTestsResults(chat.branch);
             Db.setTestsResult(chatId, prepareTestsToSave(builds));
-            const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
+            const enhancedBuilds = await this._blame.enhanceBuildTypes(
+                builds,
+                chat
+            );
             this._messenger.sendMessage(
                 chatId,
                 this._getWatcherTestsMessage(chat.branch, enhancedBuilds),
@@ -65,6 +69,9 @@ class Watcher {
             );
         } catch (e) {
             this._messenger.reportTCError(chatId, e);
+            logger.error({ chatId, message: e });
+            logger.info({ chatId, message: e.request.path });
+            logger.info({ chatId, message: e.response.data });
         }
     }
 
@@ -87,7 +94,10 @@ class Watcher {
 
         Db.setTestsResult(chatId, preparedTests);
 
-        const enhancedBuilds = await this._blame.enhanceBuildTypes(builds, chat);
+        const enhancedBuilds = await this._blame.enhanceBuildTypes(
+            builds,
+            chat
+        );
         this._messenger.sendMessage(
             chatId,
             this._getWatcherTestsMessage(chat.branch, enhancedBuilds),
