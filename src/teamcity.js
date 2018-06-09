@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const logger = require('./logger');
+const { logger } = require('./logger');
 const config = require('../config.json');
 const { stringifyLocator } = require('./utils');
 

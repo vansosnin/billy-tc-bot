@@ -3,7 +3,7 @@ const _ = require('lodash');
 const Db = require('../db');
 const TeamCity = require('../teamcity');
 const Blame = require('./blame');
-const logger = require('../logger');
+const { logger } = require('../logger');
 
 const { prepareTestsToSave, getTestsMessage } = require('../utils');
 const config = require('../../config.json');
@@ -70,6 +70,8 @@ class Watcher {
         } catch (e) {
             this._messenger.reportTCError(chatId, e);
             logger.error({ chatId, message: e });
+            logger.info({ chatId, message: e.request.path });
+            logger.info({ chatId, message: e.response.data });
         }
     }
 

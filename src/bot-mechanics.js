@@ -5,7 +5,7 @@ const Cron = require('./controls/cron');
 const Watcher = require('./controls/watcher');
 const Messenger = require('./controls/messenger');
 const Blame = require('./controls/blame');
-const logger = require('./logger');
+const { logger } = require('./logger');
 
 const { isAdmin } = require('./utils');
 const config = require('../config.json');
