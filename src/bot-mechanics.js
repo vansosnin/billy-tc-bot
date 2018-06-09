@@ -13,7 +13,7 @@ const config = require('../config.json');
 class BotMechanics {
     constructor() {
         this._bot = new TelegramBot(config['telegram-token'], {
-            polling: true,
+            polling: true
         });
         this._messenger = new Messenger(this._bot);
         this._cron = new Cron(this._messenger);
