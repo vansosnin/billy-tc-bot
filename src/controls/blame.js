@@ -20,6 +20,13 @@ class Blame {
         const enhancedBuilds = [];
 
         for (const build of builds) {
+            if (!build.buildId) {
+                enhancedBuilds.push({
+                    name: build.name
+                });
+                continue;
+            }
+
             // eslint-disable-next-line no-await-in-loop
             const changes = await TeamCity.getLastCommits(build.buildId);
 
