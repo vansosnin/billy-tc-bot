@@ -3,10 +3,9 @@ const winston = require('winston');
 const { printf, timestamp, combine } = winston.format;
 
 const chatFormat = printf((info) =>
-    info.chatId
+    (info.chatId
         ? `${info.timestamp} [${info.level}]: ChatId ${info.chatId}. "${info.message}"`
-        : JSON.stringify(info)
-);
+        : JSON.stringify(info)));
 
 const logger = winston.createLogger({
     level: 'info',
